@@ -82,8 +82,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "watchedmovies.users.apps.UsersConfig",
-    "watchedmovies.movies.apps.MoviesConfig",
+    "watchedmovies.users",
+    "watchedmovies.movies",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -266,7 +266,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "watchedmovies API",
     "DESCRIPTION": "Documentation of API endpoints of watchedmovies",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
