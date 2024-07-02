@@ -32,7 +32,7 @@ class User(AbstractUser):
             str: URL for user detail.
 
         """
-        return reverse("users:detail", kwargs={"pk": self.id})
+        return reverse("users:me")
 
     def __str__(self):
         """Return user email as string representation."""
@@ -53,7 +53,3 @@ class Profile(models.Model):
     def __str__(self):
         """Return user email as string representation."""
         return self.user.email
-
-    def get_absolute_url(self):
-        """Get URL for user's profile view."""
-        return reverse("users:profile", kwargs={"pk": self.user.id})

@@ -1,12 +1,6 @@
-from importlib import reload
-
-import pytest
-from django.contrib import admin
-from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
-from pytest_django.asserts import assertRedirects
 
-from watchedmovies.users.models import User
+from watchedmovies.users.models import Profile, User
 
 
 class TestUserAdmin:
@@ -42,24 +36,30 @@ class TestUserAdmin:
         response = admin_client.get(url)
         assert response.status_code == 200
 
-    @pytest.fixture
-    def force_allauth(self, settings):
-        settings.DJANGO_ADMIN_FORCE_ALLAUTH = True
-        # Reload the admin module to apply the setting change
-        import watchedmovies.users.admin as users_admin  # pylint: disable=import-outside-toplevel
 
-        try:
-            reload(users_admin)
-        except admin.sites.AlreadyRegistered:
-            pass
+class TestProfileAdmin:
+    def test_changelist(self, admin_client):
+        url = reverse("admin:users_profile_changelist")
+        response = admin_client.get(url)
+        assert response.status_code == 200
 
-    @pytest.mark.django_db
-    @pytest.mark.usefixtures("force_allauth")
-    def test_allauth_login(self, rf, settings):
-        request = rf.get("/fake-url")
-        request.user = AnonymousUser()
-        response = admin.site.login(request)
+    def test_search(self, admin_client):
+        url = reverse("admin:users_profile_changelist")
+        response = admin_client.get(url, data={"q": "test"})
+        assert response.status_code == 200
 
-        # The `admin` login view should redirect to the `allauth` login view
-        target_url = reverse(settings.LOGIN_URL) + "?next=" + request.path
-        assertRedirects(response, target_url, fetch_redirect_response=False)
+    def test_add(self, admin_client):
+        url = reverse("admin:users_profile_add")
+        response = admin_client.get(url)
+        assert response.status_code == 200
+        user = User.objects.get(email="admin@example.com")
+        response = admin_client.post(
+            url,
+            data={
+                "user": user.pk,
+                "bio": "Test bio",
+                "birth_date": "01/07/2024",
+            },
+        )
+        assert response.status_code == 302
+        assert Profile.objects.filter(bio="Test bio").exists()

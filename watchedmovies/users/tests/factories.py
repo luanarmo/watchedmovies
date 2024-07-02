@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
+import factory
 from django.contrib.auth import get_user_model
 from factory import Faker, post_generation
 from factory.django import DjangoModelFactory
@@ -36,3 +37,13 @@ class UserFactory(DjangoModelFactory):
     class Meta:
         model = get_user_model()
         django_get_or_create = ["email"]
+
+
+class ProfileFactory(DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    bio = Faker("text")
+    birth_date = Faker("date_of_birth")
+
+    class Meta:
+        model = "users.Profile"
+        django_get_or_create = ["user"]

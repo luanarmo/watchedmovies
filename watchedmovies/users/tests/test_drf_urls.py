@@ -1,18 +1,26 @@
 from django.urls import resolve, reverse
 
-from watchedmovies.users.models import User
+
+def test_user_register():
+    assert reverse("users:register") == "/api/users/register/"
+    assert resolve("/api/users/register/").view_name == "users:register"
 
 
-def test_user_detail(user: User):
-    assert reverse("api:user-detail", kwargs={"pk": user.pk}) == f"/api/users/{user.pk}/"
-    assert resolve(f"/api/users/{user.pk}/").view_name == "api:user-detail"
+def test_user_change_password():
+    assert reverse("users:change_password") == "/api/users/change_password/"
+    assert resolve("/api/users/change_password/").view_name == "users:change_password"
 
 
-def test_user_list():
-    assert reverse("api:user-list") == "/api/users/"
-    assert resolve("/api/users/").view_name == "api:user-list"
+def test_user_delete_profile():
+    assert reverse("users:delete_profile") == "/api/users/delete_profile/"
+    assert resolve("/api/users/delete_profile/").view_name == "users:delete_profile"
 
 
 def test_user_me():
-    assert reverse("api:user-me") == "/api/users/me/"
-    assert resolve("/api/users/me/").view_name == "api:user-me"
+    assert reverse("users:me") == "/api/users/me/"
+    assert resolve("/api/users/me/").view_name == "users:me"
+
+
+def test_user_upate_profile():
+    assert reverse("users:update_profile") == "/api/users/update_profile/"
+    assert resolve("/api/users/update_profile/").view_name == "users:update_profile"
