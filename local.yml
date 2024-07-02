@@ -1,5 +1,3 @@
-version: '3'
-
 volumes:
   watchedmovies_local_postgres_data: {}
   watchedmovies_local_postgres_data_backups: {}
@@ -21,6 +19,8 @@ services:
       - ./.envs/.local/.postgres
     ports:
       - '8000:8000'
+    stdin_open: true
+    tty: true
     command: /start
 
   postgres:
