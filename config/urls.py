@@ -12,8 +12,8 @@ urlpatterns = [
 # API URLS
 urlpatterns += [
     # API base url
-    path("api/", include("users.urls")),
-    path("api/", include("movies.urls")),
+    path("api/users/", include("watchedmovies.users.urls"), name="users"),
+    path("api/", include("watchedmovies.movies.urls"), name="movies"),
     # User urls
     # path("api/", include("users.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
