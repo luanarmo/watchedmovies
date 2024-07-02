@@ -33,4 +33,4 @@ class WatchedMovie(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.profile.user.name} watched {self.movie.title}"
+        return f"{self.profile.user.name} watched {self.title}"
