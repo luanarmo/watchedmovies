@@ -19,7 +19,7 @@ class User(AbstractUser):
     last_name = None  # type: ignore
     email = models.EmailField(_("email address"), unique=True)
     username = None  # type: ignore
-
+    email_verified = models.BooleanField(_("email verified"), default=False)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
