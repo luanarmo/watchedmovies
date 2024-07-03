@@ -24,7 +24,15 @@ class RegisterUserSerializer(serializers.ModelSerializer[UserType]):
     """User serializer to register a new user"""
 
     name = serializers.CharField(required=False, max_length=255)
-    email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=User.objects.all())])
+    email = serializers.EmailField(
+        required=True,
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message=_("Email already exists."),
+            )
+        ],
+    )
     profile = ProfileSerializer()
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
@@ -37,20 +45,6 @@ class RegisterUserSerializer(serializers.ModelSerializer[UserType]):
         if attrs["password"] != attrs["password2"]:
             raise serializers.ValidationError({"password": _("Passwords do not match.")})
         return attrs
-
-    @transaction.atomic
-    def create(self, validated_data):
-        profile_data = validated_data.pop("profile")
-        password = validated_data.pop("password")
-        # Remove password2 from validated_data to avoid error when creating user
-        validated_data.pop("password2")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        profile = Profile(user=user, **profile_data)
-        profile.full_clean()  # Validate profile data
-        profile.save()
-        return user
 
 
 class UserSerializer(serializers.ModelSerializer):
