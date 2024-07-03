@@ -1,0 +1,39 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      /* Estilos para el contenedor principal */
+      .email-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      /* Estilos para el encabezado */
+      .email-container h1 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      /* Estilos para el párrafo */
+      .email-container p {
+        color: #333;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <h1>Hello {{ name }}!</h1>
+      <p>You have successfully registered to watchedmovies app!</p>
+    </div>
+  </body>
+</html>

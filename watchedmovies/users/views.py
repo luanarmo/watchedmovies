@@ -6,26 +6,31 @@ from rest_framework.decorators import api_view, permission_classes, throttle_cla
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.views import APIView
 
 from . import serializers
+from .services import user_create
 
 User = get_user_model()
 
 
-@extend_schema(
-    methods=["POST"],
-    request=serializers.RegisterUserSerializer,
-    responses={201: serializers.RegisterUserSerializer},
-)
-@api_view(["POST"])
-@throttle_classes([AnonRateThrottle])
-@permission_classes([AllowAny])
-def register_user(request):
-    """Register a new user"""
-    serializer = serializers.RegisterUserSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+class RegisterUserView(APIView):
+    """Register a new user profile"""
+
+    throttle_classes = [AnonRateThrottle]
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=serializers.RegisterUserSerializer,
+        responses={201: serializers.RegisterUserSerializer},
+    )
+    def post(self, request):
+        """Validate data and create a new user profile"""
+        serializer = serializers.RegisterUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.validated_data.pop("password2")  # Remove password2 from validated data before creating the user
+        user_create(**serializer.validated_data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])
