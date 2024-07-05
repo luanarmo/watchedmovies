@@ -14,6 +14,7 @@ django-redis==5.4.0  # https://github.com/jazzband/django-redis
 # Django REST Framework
 djangorestframework==3.15.2  # https://github.com/encode/django-rest-framework
 django-cors-headers==4.3.1  # https://github.com/adamchainz/django-cors-headers
-django-rest-auth==0.9.5  # https://django-rest-auth.readthedocs.io/en/latest/introduction.html
+djangorestframework-simplejwt==5.2.2 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
+
 # DRF-spectacular for api documentation
 drf-spectacular==0.27.0  # https://github.com/tfranzel/drf-spectacular
