@@ -2,11 +2,8 @@ import factory
 from factory import Faker
 from factory.django import DjangoModelFactory
 
-from watchedmovies.users.tests.factories import ProfileFactory
-
 
 class WatchedMovieFactory(DjangoModelFactory):
-    profile = factory.SubFactory(ProfileFactory)
     adult = Faker("boolean")
     backdrop_path = Faker("file_path")
     genre_ids = factory.LazyFunction(lambda: str([Faker("pyint") for _ in range(3)]))

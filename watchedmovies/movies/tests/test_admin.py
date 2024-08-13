@@ -1,7 +1,6 @@
 from django.urls import reverse
 
 from watchedmovies.movies.models import WatchedMovie
-from watchedmovies.users.tests.factories import ProfileFactory
 
 
 class TestWatchedMovieAdmin:
@@ -19,11 +18,9 @@ class TestWatchedMovieAdmin:
         url = reverse("admin:movies_watchedmovie_add")
         response = admin_client.get(url)
         assert response.status_code == 200
-        profile = ProfileFactory()
         response = admin_client.post(
             url,
             data={
-                "profile": profile.pk,
                 "backdrop_path": "a",
                 "genre_ids": "[1, 2, 3]",
                 "original_language": "en",
