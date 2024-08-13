@@ -92,13 +92,17 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["new_password"] != data["confirm_password"]:
-            raise serializers.ValidationError({"password": _("Passwords do not match.")})
+            raise serializers.ValidationError({"confirm_password": _("Passwords do not match.")})
+
+        if data["old_password"] == data["new_password"]:
+            raise serializers.ValidationError({"new_password": _("New password must be different from old password.")})
+
         return data
 
     def validate_old_password(self, value):
         user = self.context["user"]
         if not user.check_password(value):
-            raise serializers.ValidationError(_("Old password is incorrect."))
+            raise serializers.ValidationError({"old_password": _("Old password is incorrect.")})
         return value
 
     @transaction.atomic
