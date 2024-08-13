@@ -8,8 +8,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
-from . import serializers
-from .services import user_create
+from . import serializers, services
 
 User = get_user_model()
 
@@ -29,7 +28,7 @@ class RegisterUserView(APIView):
         serializer = serializers.RegisterUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.validated_data.pop("password2")  # Remove password2 from validated data before creating the user
-        user_create(**serializer.validated_data)
+        services.user_create(**serializer.validated_data)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -67,14 +66,13 @@ def update(request):
 )
 @api_view(["POST"])
 @throttle_classes([UserRateThrottle])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def change_password(request):
     """Change the current user password"""
-    user = request.user
-    serializer = serializers.ChangePasswordSerializer(data=request.data, context={"user": user})
+    serializer = serializers.ChangePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user.set_password(serializer.validated_data["new_password"])
-    user.save()
+    data = serializer.validated_data
+    services.change_password(email=data["email"], new_password=data["new_password"])
     return Response({"detail": _("Password changed successfully.")})
 
 

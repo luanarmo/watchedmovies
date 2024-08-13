@@ -85,12 +85,19 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 class ChangePasswordSerializer(serializers.Serializer):
     """Serializer to change user password"""
 
-    model = User
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
     confirm_password = serializers.CharField(required=True, write_only=True)
+    email = serializers.EmailField(required=True)
 
     def validate(self, data):
+        old_password = data["old_password"]
+        email = data["email"]
+        user = User.objects.get(email=email)
+
+        if not user.check_password(old_password):
+            raise serializers.ValidationError({"old_password": _("Old password is incorrect.")})
+
         if data["new_password"] != data["confirm_password"]:
             raise serializers.ValidationError({"confirm_password": _("Passwords do not match.")})
 
@@ -99,15 +106,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         return data
 
-    def validate_old_password(self, value):
-        user = self.context["user"]
-        if not user.check_password(value):
-            raise serializers.ValidationError({"old_password": _("Old password is incorrect.")})
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No existe un usuario con este correo electrónico.")
         return value
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        instance.set_password(validated_data["new_password"])
-        instance.full_clean()
-        instance.save()
-        return instance
