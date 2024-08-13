@@ -6,4 +6,4 @@ from watchedmovies.movies.models import WatchedMovie
 class WatchedMovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = WatchedMovie
-        exclude = ("profile",)
+        fields = "__all__"

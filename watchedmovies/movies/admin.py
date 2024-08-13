@@ -5,6 +5,6 @@ from watchedmovies.movies.models import WatchedMovie
 
 @admin.register(WatchedMovie)
 class WatchedMovieAdmin(admin.ModelAdmin):
-    list_display = ["title", "profile", "watched_at", "times_watched"]
-    list_filter = ["watched_at", "times_watched"]
-    search_fields = ["profile__user__email", "title"]
+    list_display = ["title", "release_date", "original_language"]
+    list_filter = ["release_date", "original_language"]
+    search_fields = ["title"]
