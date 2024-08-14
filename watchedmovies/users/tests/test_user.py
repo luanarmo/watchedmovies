@@ -1,8 +1,10 @@
-from .factories import UserFactory, ProfileFactory
-from ..views import RegisterUserView, me, update, change_password, delete
-from rest_framework.test import APIRequestFactory
-from watchedmovies.users.models import User
 import pytest
+from rest_framework.test import APIRequestFactory
+
+from watchedmovies.users.models import User
+
+from ..views import RegisterUserView, change_password, delete, me, update
+from .factories import ProfileFactory, UserFactory
 
 FAKE = "/fake-url/"
 
@@ -227,7 +229,7 @@ def test_change_password_invalid_confirm_password(db, api_rf):
 
 def test_change_password_invalid_email(db, api_rf):
     passw = "5ng1jBsG4lt9gF"
-    user = UserFactory(password=passw, email="fourteen@test.com")
+    user = UserFactory(password=passw, email="fourteen@change.com")
     ProfileFactory(user=user)
     data = {
         "email": "not_exist@email.com",
