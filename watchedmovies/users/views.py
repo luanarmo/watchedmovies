@@ -83,4 +83,4 @@ def delete(request):
     """Delete the current user account"""
     user = request.user
     user.delete()
-    return Response({"detail": _("User account deleted.")})
+    return Response({"detail": _("User account deleted.")}, status=status.HTTP_204_NO_CONTENT)
