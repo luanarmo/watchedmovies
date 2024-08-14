@@ -15,6 +15,11 @@ class ProfileSerializer(serializers.ModelSerializer[Profile]):
     bio = serializers.CharField(required=False)
     birth_date = serializers.DateField(required=False)
 
+    def validate_birth_date(self, value):
+        # No future birth dates allowed
+        if value and value > value.today():
+            raise serializers.ValidationError("Invalid date - future dates are not allowed.")
+
     class Meta:
         model = Profile
         fields = ("pk", "bio", "birth_date")
@@ -108,5 +113,5 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("No existe un usuario con este correo electrónico.")
+            raise serializers.ValidationError("User does not exist.")
         return value
