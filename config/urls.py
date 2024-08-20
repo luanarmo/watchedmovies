@@ -13,8 +13,8 @@ urlpatterns = [
 # API URLS
 urlpatterns += [
     # API base url
-    path("api/users/", include("watchedmovies.users.urls"), name="users"),
-    path("api/", include("watchedmovies.movies.urls"), name="movies"),
+    path("api/", include("watchedmovies.users.urls", namespace="users")),
+    path("api/", include("watchedmovies.movies.urls", namespace="movies")),
     # User urls
     # path("api/", include("users.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
@@ -23,8 +23,8 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
-    path("auth/login/", token_obtain_pair),
-    path("auth/refresh/", token_refresh),
+    path("api/auth/login/", token_obtain_pair),
+    path("api/auth/refresh/", token_refresh),
 ]
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
