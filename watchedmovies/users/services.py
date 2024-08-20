@@ -23,3 +23,18 @@ def change_password(*, email: str, new_password: str) -> User:
     user.full_clean()
     user.save()
     return user
+
+
+def user_update(*, user: User, name: str = None, profile: dict = None) -> User:
+    """Update the user data with the given data."""
+    # Update user data if provided
+    user.name = name or user.name
+    user.full_clean()
+    user.save()
+    # Update profile data if provided
+    if profile:
+        [setattr(user.profile, key, value) for key, value in profile.items()]
+        user.profile.full_clean()
+        user.profile.save()
+
+    return user
