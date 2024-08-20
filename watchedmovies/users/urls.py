@@ -1,13 +1,9 @@
-from django.urls import path
+from django.urls import include, path
 
-from watchedmovies.users import views
+from .router import router
 
 app_name = "users"
 
 urlpatterns = [
-    path("register/", views.RegisterUserView.as_view(), name="register"),
-    path("me/", views.me, name="me"),
-    path("update_profile/", views.update, name="update_profile"),
-    path("change_password/", views.change_password, name="change_password"),
-    path("delete_profile/", views.delete, name="delete_profile"),
+    path("", include(router.urls)),
 ]
