@@ -1,86 +1,85 @@
 from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
-from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet
 
 from . import serializers, services
 
 User = get_user_model()
 
 
-class RegisterUserView(APIView):
-    """Register a new user profile"""
-
+class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
     throttle_classes = [AnonRateThrottle]
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        request=serializers.RegisterUserSerializer,
-        responses={201: serializers.RegisterUserSerializer},
-    )
-    def post(self, request):
+    def get_serializer_class(self):
+        actions = {
+            "create": serializers.RegisterUserSerializer,
+            "change_password": serializers.ChangePasswordSerializer,
+        }
+        return actions.get(self.action, serializers.DefaultSerializer)
+
+    def create(self, request, *args, **kwargs):
         """Validate data and create a new user profile"""
-        serializer = serializers.RegisterUserSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.validated_data.pop("password2")  # Remove password2 from validated data before creating the user
+        serializer.validated_data.pop("confirm_password")
         services.user_create(**serializer.validated_data)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-@api_view(["GET"])
-@throttle_classes([UserRateThrottle])
-@permission_classes([IsAuthenticated])
-def me(request):
-    """Return the current user data"""
-    user = request.user
-    serializer = serializers.UserSerializer(user)
-    return Response(serializer.data)
-
-
-@extend_schema(
-    methods=["PUT", "PATCH"],
-    request=serializers.UpdateUserSerializer,
-    responses={200: serializers.UpdateUserSerializer},
-)
-@api_view(["PUT", "PATCH"])
-@throttle_classes([UserRateThrottle])
-@permission_classes([IsAuthenticated])
-def update(request):
-    """Update the current user data"""
-    user = request.user
-    serializer = serializers.UpdateUserSerializer(user, data=request.data, partial=True)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data)
+    @action(detail=False, methods=["put"], url_path="change_password", url_name="change_password")
+    @extend_schema(request=serializers.ChangePasswordSerializer, methods=["PUT"])
+    def change_password(self, request, *args, **kwargs):
+        """Change the password of the user with the given email"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        services.change_password(email=data["email"], new_password=data["new_password"])
+        return Response({"detail": "Password changed successfully."})
 
 
-@extend_schema(
-    methods=["POST"],
-    request=serializers.ChangePasswordSerializer,
-    responses={200: serializers.ChangePasswordSerializer},
-)
-@api_view(["POST"])
-@throttle_classes([UserRateThrottle])
-@permission_classes([AllowAny])
-def change_password(request):
-    """Change the current user password"""
-    serializer = serializers.ChangePasswordSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    data = serializer.validated_data
-    services.change_password(email=data["email"], new_password=data["new_password"])
-    return Response({"detail": _("Password changed successfully.")})
+class UserViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+    """Retrieve the current user data"""
 
+    throttle_classes = [UserRateThrottle]
+    permission_classes = [IsAuthenticated]
 
-@api_view(["DELETE"])
-@throttle_classes([UserRateThrottle])
-@permission_classes([IsAuthenticated])
-def delete(request):
-    """Delete the current user account"""
-    user = request.user
-    user.delete()
-    return Response({"detail": _("User account deleted.")}, status=status.HTTP_204_NO_CONTENT)
+    def get_object(self):
+        return self.request.user
+
+    def get_serializer_class(self):
+        actions = {
+            "retrieve": serializers.UserSerializer,
+            "update": serializers.UpdateUserSerializer,
+            "partial_update": serializers.UpdateUserSerializer,
+        }
+        return actions.get(self.action, serializers.DefaultSerializer)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve the current user data"""
+        user = self.get_object()
+        serializer = serializers.UserSerializer(user)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        """Update the current user data"""
+        user = self.get_object()
+        serializer = serializers.UpdateUserSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        services.user_update(user=user, name=data["name"], profile=data["profile"])
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Update the current user data"""
+        user = self.get_object()
+        serializer = serializers.UpdateUserSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        services.user_update(user=user, name=data.get("name"), profile=data.get("profile"))
+        return Response(serializer.data)
