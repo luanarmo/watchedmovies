@@ -2,7 +2,7 @@ import pytest
 from rest_framework.test import APIRequestFactory
 
 from watchedmovies.users.models import User
-from watchedmovies.users.views import me
+from watchedmovies.users.views import UserViewSet
 
 
 class TestUserViews:
@@ -14,6 +14,6 @@ class TestUserViews:
         request = api_rf.get("/fake-url/")
         request.user = user
 
-        response = me(request)  # type: ignore
+        response = UserViewSet.as_view({"get": "retrieve"})(request)
 
         assert ["pk", "name", "email", "profile"] == list(response.data.keys())
