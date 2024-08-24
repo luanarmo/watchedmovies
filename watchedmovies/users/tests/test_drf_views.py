@@ -14,6 +14,6 @@ class TestUserViews:
         request = api_rf.get("/fake-url/")
         request.user = user
 
-        response = UserViewSet.as_view({"get": "retrieve"})(request)
+        response = UserViewSet.as_view({"get": "me"})(request)
 
         assert ["pk", "name", "email", "profile"] == list(response.data.keys())

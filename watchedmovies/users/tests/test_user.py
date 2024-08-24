@@ -131,7 +131,7 @@ def test_me(db, api_rf):
     user = UserFactory()
     request = api_rf.get(FAKE)
     request.user = user
-    response = UserViewSet.as_view({"get": "retrieve"})(request)
+    response = UserViewSet.as_view({"get": "me"})(request)
     assert response.status_code == 200
     assert response.data["email"] == user.email
 
@@ -142,7 +142,7 @@ def test_update_user(db, api_rf):
     data = {"name": "Updated Name", "profile": {"bio": "Updated Bio", "birth_date": "1995-01-01"}}
     request = api_rf.put(FAKE, data, format="json")
     request.user = user
-    response = UserViewSet.as_view({"put": "update"})(request)
+    response = UserViewSet.as_view({"put": "update_user"})(request)
     print(response.data)
     assert response.status_code == 200
     assert response.data["name"] == data["name"]
@@ -156,7 +156,7 @@ def test_update_user_blank_profile(db, api_rf):
     data = {"name": "Updated Name", "profile": {}}
     request = api_rf.patch(FAKE, data, format="json")
     request.user = user
-    response = UserViewSet.as_view({"patch": "update"})(request)
+    response = UserViewSet.as_view({"patch": "update_user"})(request)
     assert response.status_code == 200
     assert response.data["name"] == data["name"]
     assert response.data["profile"]["bio"] == "Old Bio"
@@ -250,5 +250,5 @@ def test_delete_user(db, api_rf):
     ProfileFactory(user=user)
     request = api_rf.delete(FAKE)
     request.user = user
-    response = UserViewSet.as_view({"delete": "destroy"})(request)
+    response = UserViewSet.as_view({"delete": "delete_user"})(request)
     assert response.status_code == 204
