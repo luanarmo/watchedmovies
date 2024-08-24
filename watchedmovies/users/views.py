@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
@@ -43,7 +43,7 @@ class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
         return Response({"detail": "Password changed successfully."})
 
 
-class UserViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+class UserViewSet(GenericViewSet):
     """Retrieve the current user data"""
 
     throttle_classes = [UserRateThrottle]
@@ -54,19 +54,21 @@ class UserViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin, DestroyM
 
     def get_serializer_class(self):
         actions = {
-            "retrieve": serializers.UserSerializer,
-            "update": serializers.UpdateUserSerializer,
-            "partial_update": serializers.UpdateUserSerializer,
+            "me": serializers.UserSerializer,
+            "update_user": serializers.UpdateUserSerializer,
+            "partial_update_user": serializers.UpdateUserSerializer,
         }
         return actions.get(self.action, serializers.DefaultSerializer)
 
-    def retrieve(self, request, *args, **kwargs):
+    @action(detail=False, methods=["get"], url_path="me", url_name="me")
+    def me(self, request, *args, **kwargs):
         """Retrieve the current user data"""
         user = self.get_object()
         serializer = serializers.UserSerializer(user)
         return Response(serializer.data)
 
-    def update(self, request, *args, **kwargs):
+    @action(detail=False, methods=["put"], url_path="update_user", url_name="update_user")
+    def update_user(self, request, *args, **kwargs):
         """Update the current user data"""
         user = self.get_object()
         serializer = serializers.UpdateUserSerializer(user, data=request.data)
@@ -75,7 +77,8 @@ class UserViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin, DestroyM
         services.user_update(user=user, name=data["name"], profile=data["profile"])
         return Response(serializer.data)
 
-    def partial_update(self, request, *args, **kwargs):
+    @action(detail=False, methods=["patch"], url_path="partial_update_user", url_name="partial_update_user")
+    def partial_update_user(self, request, *args, **kwargs):
         """Update the current user data"""
         user = self.get_object()
         serializer = serializers.UpdateUserSerializer(user, data=request.data, partial=True)
@@ -83,3 +86,10 @@ class UserViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin, DestroyM
         data = serializer.validated_data
         services.user_update(user=user, name=data.get("name"), profile=data.get("profile"))
         return Response(serializer.data)
+
+    @action(detail=False, methods=["delete"], url_path="delete_user", url_name="delete_user")
+    def delete_user(self, request, *args, **kwargs):
+        """Delete the current user"""
+        user = self.get_object()
+        user.delete()
+        return Response({"detail": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
