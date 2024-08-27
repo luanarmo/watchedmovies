@@ -2,6 +2,9 @@ import factory
 from factory import Faker
 from factory.django import DjangoModelFactory
 
+from watchedmovies.movies.models import ViewDetails
+from watchedmovies.users.tests.factories import ProfileFactory
+
 
 class WatchedMovieFactory(DjangoModelFactory):
     adult = Faker("boolean")
@@ -21,3 +24,16 @@ class WatchedMovieFactory(DjangoModelFactory):
     class Meta:
         model = "movies.WatchedMovie"
         django_get_or_create = ["title"]
+
+
+class ViewDetailFactory(DjangoModelFactory):
+    watched_movie = factory.SubFactory(WatchedMovieFactory)
+    profile = factory.SubFactory(ProfileFactory)
+    rating = Faker("pyint", min_value=1, max_value=5)
+    comment = Faker("text")
+    language = Faker("random_element", elements=[lang[0] for lang in ViewDetails.LANGUAGE_CHOICES])
+    place = Faker("random_element", elements=[place[0] for place in ViewDetails.PLACE_CHOICES])
+
+    class Meta:
+        model = "movies.ViewDetails"
+        django_get_or_create = ["watched_movie", "profile"]
