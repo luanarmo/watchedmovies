@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.test import APIRequestFactory
 
 from watchedmovies.movies.models import WatchedMovie
 from watchedmovies.movies.tests.factories import WatchedMovieFactory
@@ -19,3 +20,8 @@ def user(db) -> User:
 @pytest.fixture
 def watchedmovie(db) -> WatchedMovie:
     return WatchedMovieFactory()
+
+
+@pytest.fixture
+def api_rf() -> APIRequestFactory:
+    return APIRequestFactory()
