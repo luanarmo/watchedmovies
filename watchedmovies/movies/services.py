@@ -24,13 +24,18 @@ def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
     """Get or create a watched movie with the given data."""
     original_title = watched_movie.get("original_title")
     release_date = watched_movie.get("release_date")
-    existed_movie = WatchedMovie.objects.filter(original_title=original_title, release_date=release_date).first()
+    movie_exists = WatchedMovie.objects.filter(original_title=original_title, release_date=release_date).first()
 
-    if existed_movie:
-        return existed_movie
+    if movie_exists:
+        return movie_exists
 
     movie = WatchedMovie(**watched_movie)
     movie.full_clean()
     movie.save()
 
     return movie
+
+
+def destroy_view_detail(*, watched_movie: WatchedMovie) -> None:
+    """Delete the view details of the given watched movie."""
+    ViewDetails.objects.filter(watched_movie=watched_movie).delete()
