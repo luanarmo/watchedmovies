@@ -1,15 +1,7 @@
-import pytest
-from rest_framework.test import APIRequestFactory
-
 from ..views import AnonymousUserViewset, UserViewSet
 from .factories import ProfileFactory, UserFactory
 
 FAKE = "/fake-url/"
-
-
-@pytest.fixture
-def api_rf() -> APIRequestFactory:
-    return APIRequestFactory()
 
 
 def test_register_user(db, api_rf):
