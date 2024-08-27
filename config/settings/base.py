@@ -67,12 +67,11 @@ DJANGO_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
-    # "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
     "django.forms",
+    "django_filters",
 ]
 THIRD_PARTY_APPS = [
     "rest_framework",
@@ -272,7 +271,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "watchedmovies API",
     "DESCRIPTION": "Documentation of API endpoints of watchedmovies",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
