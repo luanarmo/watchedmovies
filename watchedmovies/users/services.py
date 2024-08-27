@@ -1,5 +1,4 @@
 from .models import Profile, User
-from .utils.sendmail import send_emails
 
 
 def user_create(*, name: str, email: str, profile: any, password: str) -> User:
@@ -12,7 +11,6 @@ def user_create(*, name: str, email: str, profile: any, password: str) -> User:
     profile = Profile(user=user, **profile_data)
     profile.full_clean()  # Validate profile data
     profile.save()
-    send_emails(name=name, email=email)
     return user
 
 
