@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
@@ -7,20 +7,28 @@ from rest_framework.viewsets import GenericViewSet
 
 from watchedmovies.movies.models import ViewDetails, WatchedMovie
 
-from . import serializers, services
+from ..pagination import CustomPagination
+from . import filters, serializers, services
 
 
-class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, DestroyModelMixin):
+class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     """Wiewset list watched movies"""
 
     serializer_class = serializers.WatchedMovieSerializer
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
     serializer_class = serializers.WatchedMovieSerializer
+    pagination_class = CustomPagination
+    filterset_class = filters.WatchedMovieFilter
 
     def get_queryset(self):
         profile = self.request.user.profile
-        return WatchedMovie.objects.filter(view_details__profile=profile)
+        return WatchedMovie.objects.filter(view_details__profile=profile).distinct()
+
+    def destroy(self, request, *args, **kwargs):
+        watched_movie = self.get_object()
+        services.destroy_view_detail(watched_movie=watched_movie)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
@@ -28,6 +36,9 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
 
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
+    serializer_class = serializers.ListViewDetailSerializer
+    pagination_class = CustomPagination
+    filterset_class = filters.ViewDetailFilter
 
     def get_serializer_class(self):
         actions = {
