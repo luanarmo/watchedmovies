@@ -2,6 +2,8 @@ from django.db import models
 
 
 class WatchedMovie(models.Model):
+    """Model that represents a watched movie."""
+
     adult = models.BooleanField(default=False)
     backdrop_path = models.CharField(max_length=255, blank=True)
     genre_ids = models.JSONField()
@@ -20,19 +22,14 @@ class WatchedMovie(models.Model):
         verbose_name = "Movie"
         verbose_name_plural = "Movies"
         ordering = ["id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["original_title", "release_date"],
-                name="unique_original_title_release_date",
-                violation_error_message="This movie has already been watched.",
-            )
-        ]
 
     def __str__(self):
         return self.title
 
 
 class ViewDetails(models.Model):
+    """Model that represents the details of a watched movie."""
+
     PLACE_CHOICES = [
         ("cinema", "Movie Theater"),
         ("home", "Home"),
