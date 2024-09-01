@@ -26,6 +26,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return WatchedMovie.objects.filter(view_details__profile=profile).distinct()
 
     def destroy(self, request, *args, **kwargs):
+        """Delete a watched movie"""
         watched_movie = self.get_object()
         services.destroy_view_detail(watched_movie=watched_movie)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -54,6 +55,7 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
         return ViewDetails.objects.filter(profile=self.request.user.profile)
 
     def create(self, request, *args, **kwargs):
+        """Create a ViewDetail"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         view_detail = services.create_view_detail(**serializer.validated_data, profile=request.user.profile)

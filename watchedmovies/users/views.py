@@ -14,6 +14,10 @@ User = get_user_model()
 
 
 class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
+    """
+    Create a new user profile and change the password of the user with the given email.
+    """
+
     throttle_classes = [AnonRateThrottle]
     permission_classes = [AllowAny]
 
@@ -44,7 +48,9 @@ class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
 
 
 class UserViewSet(GenericViewSet):
-    """Retrieve the current user data"""
+    """
+    Manage the current user profile.
+    """
 
     throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated]

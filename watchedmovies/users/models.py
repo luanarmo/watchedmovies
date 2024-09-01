@@ -10,6 +10,7 @@ class User(AbstractUser):
     Default custom user model for watchedmovies.
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
+    fields: name, email, email_verified
     """
 
     # First and last name do not cover name patterns around the globe
@@ -30,6 +31,11 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
+    """
+    Profile model for the user.
+    fields: user, bio, birth_date
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
     birth_date = models.DateField(null=True, blank=True)
