@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework.viewsets import GenericViewSet
 from watchedmovies.movies.models import ViewDetails, WatchedMovie
 
 from ..pagination import CustomPagination
+from ..services import tmdb_api
 from . import filters, serializers, services
 
 
@@ -60,3 +62,36 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
         serializer.is_valid(raise_exception=True)
         view_detail = services.create_view_detail(**serializer.validated_data, profile=request.user.profile)
         return Response(serializers.ListViewDetailSerializer(view_detail).data, status=status.HTTP_201_CREATED)
+
+
+class TMDBViewSet(GenericViewSet):
+    """Viewset for TMDB API"""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    @action(detail=False, methods=["GET"])
+    def movie_details(self, request, *args, **kwargs):
+        """Get movie details"""
+        movie_id = kwargs.get("movie_id")
+        movie_details = tmdb_api.get_movie_details(movie_id)
+        serialized = serializers.WatchedMovieSerializer(data=movie_details)
+        serialized.is_valid(raise_exception=True)
+
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["GET"])
+    def popular_movies(self, request, *args, **kwargs):
+        """Get popular movies"""
+        popular_movies = tmdb_api.get_popular_movies()
+        serialized = serializers.ListTMDBMovieSerializer(data=popular_movies["results"], many=True)
+        serialized.is_valid(raise_exception=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["GET"], url_path="search-movies/(?P<query>[^/.]+)")
+    def search_movies(self, request, query=None, *args, **kwargs):
+        """Search movies"""
+        finded_movies = tmdb_api.search_movies(query)
+        serialized = serializers.ListTMDBMovieSerializer(data=finded_movies, many=True)
+        serialized.is_valid(raise_exception=True)
+        return Response(serialized.data, status=status.HTTP_200_OK)
