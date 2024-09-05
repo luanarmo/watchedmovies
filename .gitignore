@@ -277,4 +277,3 @@ watchedmovies/media/
 .ipython/
 .env
 .envs/*
-!.envs/.local/
