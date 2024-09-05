@@ -277,4 +277,4 @@ watchedmovies/media/
 .ipython/
 .env
 .envs/*
-!.envs/.local/.postgres
+!.envs/.local/
