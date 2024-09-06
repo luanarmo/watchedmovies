@@ -8,4 +8,4 @@ python manage.py migrate
 python /app/manage.py collectstatic --noinput
 
 echo "Ejecuta gunicorn"
-gunicorn --forwarded-allow-ips="*" --pythonpath ./config watchedmovies.wsgi:application --workers=1 --bind ["0.0.0.0"]
+gunicorn --forwarded-allow-ips="*" --pythonpath ./config wsgi:application --workers=1 --bind ["0.0.0.0"]
