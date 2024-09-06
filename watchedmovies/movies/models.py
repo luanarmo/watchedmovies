@@ -6,7 +6,7 @@ class WatchedMovie(models.Model):
 
     adult = models.BooleanField(default=False)
     backdrop_path = models.CharField(max_length=255, blank=True)
-    genre_ids = models.JSONField()
+    genre_ids = models.JSONField(blank=True, null=True)
     original_language = models.CharField(max_length=10)
     original_title = models.CharField(max_length=510)
     overview = models.TextField(blank=True)
