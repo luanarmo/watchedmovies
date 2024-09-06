@@ -20,7 +20,7 @@ def make_request(url):
 def get_movie_details(movie_id):
     """Get the details of a movie by its ID."""
     url = f"{BASE_URL}/movie/{movie_id}?language=en-US"
-    response = requests.get(url)
+    response = make_request(url)
 
     if response.status_code != 200:
         return json.dumps({})
