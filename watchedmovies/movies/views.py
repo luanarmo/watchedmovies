@@ -69,9 +69,10 @@ class TMDBViewSet(GenericViewSet):
 
     throttle_classes = [AnonRateThrottle]
     permission_classes = [AllowAny]
+    serializer_class = serializers.ListTMDBMovieSerializer
 
     @action(detail=False, methods=["GET"], url_path="movie-details/(?P<movie_id>[^/.]+)")
-    def movie_details(self, request, movie_id=None, *args, **kwargs):
+    def movie_details(self, request, movie_id: int = None, *args, **kwargs):
         """Get movie details"""
         movie_details = tmdb_api.get_movie_details(movie_id)
         serialized = serializers.ListTMDBMovieSerializer(data=movie_details)
@@ -88,7 +89,7 @@ class TMDBViewSet(GenericViewSet):
         return Response(serialized.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["GET"], url_path="search-movies/(?P<query>[^/.]+)")
-    def search_movies(self, request, query=None, *args, **kwargs):
+    def search_movies(self, request, query: str = None, *args, **kwargs):
         """Search movies"""
         finded_movies = tmdb_api.search_movies(query)
         serialized = serializers.ListTMDBMovieSerializer(data=finded_movies, many=True)
