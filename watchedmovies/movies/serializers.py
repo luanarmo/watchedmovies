@@ -18,13 +18,13 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
         if obj.poster_path == "" or obj.poster_path is None:
             return None
 
-        return get_poster_url(obj.poster_path)
+        return get_poster_url(obj.poster_path, "w342")
 
     def get_backdrop_url(self, obj):
         if obj.backdrop_path == "" or obj.backdrop_path is None:
             return None
 
-        return get_poster_url(obj.backdrop_path)
+        return get_poster_url(obj.backdrop_path, "w780")
 
     class Meta:
         model = WatchedMovie
