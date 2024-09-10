@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from watchedmovies.movies.models import ViewDetails, WatchedMovie
-from watchedmovies.movies.utils import get_poster_url
+from watchedmovies.movies.utils import get_backdrop_path, get_poster_path
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -18,13 +18,13 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
         if obj.poster_path == "" or obj.poster_path is None:
             return None
 
-        return get_poster_url(obj.poster_path, "w342")
+        return get_poster_path(obj.poster_path)
 
     def get_backdrop_url(self, obj):
         if obj.backdrop_path == "" or obj.backdrop_path is None:
             return None
 
-        return get_poster_url(obj.backdrop_path, "w780")
+        return get_backdrop_path(obj.backdrop_path)
 
     class Meta:
         model = WatchedMovie
@@ -56,7 +56,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
         if obj.get("poster_path") is None:
             return None
 
-        return get_poster_url(obj.get("poster_path"))
+        return get_poster_path(obj.get("poster_path"))
 
     def get_backdrop_url(self, obj):
         if obj is None:
@@ -65,7 +65,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
         if obj.get("backdrop_path") is None:
             return None
 
-        return get_poster_url(obj.get("backdrop_path"))
+        return get_backdrop_path(obj.get("backdrop_path"))
 
     def get_release_date(self, obj):
         release_date = obj.get("release_date")
