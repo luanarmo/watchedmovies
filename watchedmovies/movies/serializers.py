@@ -11,6 +11,7 @@ class DefaultSerializer(serializers.Serializer):
 
 
 class WatchedMovieSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
     poster_url = serializers.SerializerMethodField()
     backdrop_url = serializers.SerializerMethodField()
 
@@ -41,7 +42,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
     overview = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     popularity = serializers.DecimalField(max_digits=10, decimal_places=3, allow_null=True, required=False)
     poster_path = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    release_date = serializers.SerializerMethodField()
+    release_date = serializers.DateField(allow_null=True, required=False, format="%Y-%m-%d")
     title = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     video = serializers.BooleanField(allow_null=True, required=False)
     vote_average = serializers.DecimalField(max_digits=5, decimal_places=3, allow_null=True, required=False)
@@ -66,11 +67,6 @@ class ListTMDBMovieSerializer(serializers.Serializer):
             return None
 
         return get_backdrop_path(obj.get("backdrop_path"))
-
-    def get_release_date(self, obj):
-        release_date = obj.get("release_date")
-        if release_date == "":
-            return None
 
 
 class ListWatchedMovieSerializer(serializers.ModelSerializer):
