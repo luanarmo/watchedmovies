@@ -20,6 +20,8 @@ class WatchedMovieFilter(django_filters.FilterSet):
 class ViewDetailFilter(django_filters.FilterSet):
     """Filter for view details."""
 
+    watched = django_filters.NumberFilter(field_name="watched_movie__id", lookup_expr="exact")
+
     class Meta:
         model = ViewDetails
         fields = {
