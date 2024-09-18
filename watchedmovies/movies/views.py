@@ -71,6 +71,9 @@ class TMDBViewSet(GenericViewSet):
     permission_classes = [AllowAny]
     serializer_class = serializers.ListTMDBMovieSerializer
 
+    def get_queryset(self):
+        pass
+
     @action(detail=False, methods=["GET"], url_path="movie-details/(?P<movie_id>[^/.]+)")
     def movie_details(self, request, movie_id: int = None, *args, **kwargs):
         """Get movie details"""
