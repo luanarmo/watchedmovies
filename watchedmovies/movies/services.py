@@ -5,7 +5,7 @@ def create_view_detail(
     *,
     watched_movie: dict,
     profile: any,
-    rating: int,
+    rating: int = None,
     comment: str,
     language: str,
     place: str,

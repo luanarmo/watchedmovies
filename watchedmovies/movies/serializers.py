@@ -42,7 +42,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
     overview = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     popularity = serializers.DecimalField(max_digits=10, decimal_places=3, allow_null=True, required=False)
     poster_path = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    release_date = serializers.DateField(allow_null=True, required=False, format="%Y-%m-%d")
+    release_date = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     title = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     video = serializers.BooleanField(allow_null=True, required=False)
     vote_average = serializers.DecimalField(max_digits=5, decimal_places=3, allow_null=True, required=False)
@@ -79,6 +79,8 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
 
 class CreateViewDetailSerializer(serializers.ModelSerializer):
     watched_movie = WatchedMovieSerializer(required=True)
+    rating = serializers.IntegerField(min_value=1, max_value=10, required=False)
+    comment = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = ViewDetails
@@ -94,6 +96,7 @@ class UpdateViewDetailSerializer(serializers.ModelSerializer):
 class ListViewDetailSerializer(serializers.ModelSerializer):
     language = serializers.CharField(source="get_language_display")
     place = serializers.CharField(source="get_place_display")
+    watched_at = serializers.DateTimeField(format="%Y-%m")
 
     class Meta:
         model = ViewDetails
