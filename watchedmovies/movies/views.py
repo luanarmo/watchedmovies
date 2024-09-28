@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
@@ -34,7 +34,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
     """Wiewset create, list, update, delete ViewDetail"""
 
     permission_classes = [IsAuthenticated]
@@ -62,6 +62,12 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
         serializer.is_valid(raise_exception=True)
         view_detail = services.create_view_detail(**serializer.validated_data, profile=request.user.profile)
         return Response(serializers.ListViewDetailSerializer(view_detail).data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a ViewDetail"""
+        view = self.get_object()
+        view.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TMDBViewSet(GenericViewSet):
