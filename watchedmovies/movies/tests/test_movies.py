@@ -10,6 +10,7 @@ FAKE = "/fake-url/"
 def test_register_view_detail(db, user, api_rf):
     ProfileFactory(user=user)
     movie_data = {
+        "id": 1,
         "adult": False,
         "backdrop_path": "/fake-backdrop-path/",
         "genre_ids": "[1, 2, 3]",
@@ -130,6 +131,7 @@ def test_destroy_watched_movie(db, user, api_rf):
 def test_get_or_create_watched_movie(db, user, api_rf):
     profile = ProfileFactory(user=user)
     movie_data = {
+        "id": 1,
         "adult": False,
         "backdrop_path": "/fake-backdrop-path/",
         "genre_ids": "[1, 2, 3]",
