@@ -19,7 +19,6 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     serializer_class = serializers.WatchedMovieSerializer
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
-    serializer_class = serializers.WatchedMovieSerializer
     pagination_class = CustomPagination
     filterset_class = filters.WatchedMovieFilter
 
@@ -27,10 +26,27 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         profile = self.request.user.profile
         return WatchedMovie.objects.filter(view_details__profile=profile).distinct()
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        profile = request.user.profile
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={"profile": profile})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True, context={"profile": profile})
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, context={"profile": request.user.profile})
+        return Response(serializer.data)
+
     def destroy(self, request, *args, **kwargs):
         """Delete a watched movie"""
         watched_movie = self.get_object()
-        services.destroy_view_detail(watched_movie=watched_movie)
+        profile = request.user.profile
+        services.destroy_view_detail(watched_movie=watched_movie, profile=profile)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
