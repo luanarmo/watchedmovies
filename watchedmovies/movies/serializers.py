@@ -30,10 +30,12 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
         return get_backdrop_path(obj.backdrop_path)
 
     def get_total_views(self, obj):
-        return ViewDetails.objects.filter(watched_movie=obj.id).count()
+        profile = self.context.get("profile")
+        return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).count()
 
     def get_average_rating(self, obj):
-        ratings = ViewDetails.objects.filter(watched_movie=obj.id)
+        profile = self.context.get("profile")
+        ratings = ViewDetails.objects.filter(watched_movie=obj.id, profile=profile)
         not_null_ratings = [rating.rating for rating in ratings if rating.rating is not None]
         if not not_null_ratings:
             return None
