@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from watchedmovies.movies.models import ViewDetails, WatchedMovie
 from watchedmovies.movies.utils import get_backdrop_path, get_poster_path
+from django.db.models import Avg
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -14,6 +15,8 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     poster_url = serializers.SerializerMethodField()
     backdrop_url = serializers.SerializerMethodField()
+    total_views = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
 
     def get_poster_url(self, obj):
         if obj.poster_path == "" or obj.poster_path is None:
@@ -26,6 +29,17 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
             return None
 
         return get_backdrop_path(obj.backdrop_path)
+
+    def get_total_views(self, obj):
+        return ViewDetails.objects.filter(watched_movie=obj.id).count()
+
+    def get_average_rating(self, obj):
+        ratings = ViewDetails.objects.filter(watched_movie=obj.id)
+        not_null_ratings = [rating.rating for rating in ratings if rating.rating is not None]
+        if not not_null_ratings:
+            return None
+
+        return sum(not_null_ratings) / len(not_null_ratings)
 
     class Meta:
         model = WatchedMovie
