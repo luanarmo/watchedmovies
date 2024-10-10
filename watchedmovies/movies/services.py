@@ -36,6 +36,6 @@ def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
     return movie
 
 
-def destroy_view_detail(*, watched_movie: WatchedMovie) -> None:
+def destroy_view_detail(*, watched_movie: WatchedMovie, profile) -> None:
     """Delete the view details of the given watched movie."""
-    ViewDetails.objects.filter(watched_movie=watched_movie).delete()
+    ViewDetails.objects.filter(watched_movie=watched_movie, profile=profile).delete()
