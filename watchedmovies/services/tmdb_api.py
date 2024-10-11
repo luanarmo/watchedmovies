@@ -17,13 +17,13 @@ def make_request(url):
     return requests.get(url, headers=headers)
 
 
-def get_movie_details(movie_id):
+def get_movie_details(movie_id) -> None | dict:
     """Get the details of a movie by its ID."""
     url = f"{BASE_URL}/movie/{movie_id}?language=en-US"
     response = make_request(url)
 
     if response.status_code != 200:
-        return json.dumps({})
+        return None
 
     return response.json()
 
