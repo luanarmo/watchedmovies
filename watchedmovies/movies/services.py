@@ -1,4 +1,5 @@
 from .models import ViewDetails, WatchedMovie
+from watchedmovies.services import tmdb_api
 
 
 def create_view_detail(
@@ -29,7 +30,10 @@ def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
     if movie_exists:
         return movie_exists
 
+    movie_details = tmdb_api.get_movie_details(watched_movie.get("id"))
     movie = WatchedMovie(**watched_movie)
+    movie.runtime = movie_details.get("runtime")
+    movie.more_details = movie_details
     movie.full_clean()
     movie.save()
 
