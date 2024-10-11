@@ -17,6 +17,8 @@ class WatchedMovie(models.Model):
     video = models.BooleanField(default=False)
     vote_average = models.DecimalField(max_digits=5, decimal_places=3)
     vote_count = models.PositiveIntegerField()
+    runtime = models.PositiveIntegerField(null=True, blank=True)
+    more_details = models.JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name = "Movie"
