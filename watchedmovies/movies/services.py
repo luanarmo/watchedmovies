@@ -1,4 +1,5 @@
 from watchedmovies.services import tmdb_api
+
 from .models import ViewDetails, WatchedMovie
 
 

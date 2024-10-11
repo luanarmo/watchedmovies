@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from watchedmovies.movies.models import WatchedMovie
 from watchedmovies.movies.services import tmdb_api
 
@@ -12,7 +13,6 @@ class Command(BaseCommand):
     a request to the TMDB API to get the details of each movie."""
 
     def handle(self, *args, **kwargs):
-
         watched_movies = WatchedMovie.objects.all()
 
         for watched_movie in watched_movies:
