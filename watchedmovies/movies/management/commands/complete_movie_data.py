@@ -8,7 +8,8 @@ class Command(BaseCommand):
     This command completes the data of the movies. It makes a request to the TMDB API to get the details of each movie.
     """
 
-    help = "This command completes the data of the movies. It makes a request to the TMDB API to get the details of each movie."
+    help = """This command completes the data of the movies. It makes
+    a request to the TMDB API to get the details of each movie."""
 
     def handle(self, *args, **kwargs):
 
