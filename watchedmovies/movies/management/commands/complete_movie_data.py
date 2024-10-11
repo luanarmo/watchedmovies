@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
-from watchedmovies.movies.services import tmdb_api
 from watchedmovies.movies.models import WatchedMovie
+from watchedmovies.movies.services import tmdb_api
 
 
 class Command(BaseCommand):
@@ -22,4 +22,6 @@ class Command(BaseCommand):
             watched_movie.full_clean()
             watched_movie.save()
 
-        self.stdout.write(self.style.SUCCESS("All movies have been updated successfully!"))
+        self.stdout.write(
+            self.style.SUCCESS("All movies have been updated successfully!"),
+        )

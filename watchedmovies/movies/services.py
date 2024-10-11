@@ -1,5 +1,5 @@
-from .models import ViewDetails, WatchedMovie
 from watchedmovies.services import tmdb_api
+from .models import ViewDetails, WatchedMovie
 
 
 def create_view_detail(
