@@ -1,5 +1,6 @@
 from django.db import models
 from rest_framework import serializers
+
 from watchedmovies.movies.models import ViewDetails, WatchedMovie
 from watchedmovies.movies.utils import get_backdrop_path, get_poster_path
 
