@@ -32,7 +32,7 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WatchedMovie
-        fields = ["id", "title", "release_date", "total_views", "vote_average"]
+        fields = ["id", "title", "release_date", "total_views", "vote_average", "poster_url"]
 
 
 class WatchedMovieSerializer(serializers.ModelSerializer):
