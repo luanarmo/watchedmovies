@@ -11,6 +11,23 @@ class DefaultSerializer(serializers.Serializer):
     pass
 
 
+class ListWatchedMovieSerializer(serializers.ModelSerializer):
+    title = serializers.CharField()
+    release_date = serializers.DateField()
+    total_views = serializers.SerializerMethodField()
+    vote_average = serializers.SerializerMethodField()
+
+    def get_total_views(self, obj):
+        return ViewDetails.objects.filter(watched_movie=obj.id).count()
+
+    def get_vote_average(self, obj):
+        return ViewDetails.objects.filter(watched_movie=obj.id).aggregate(models.Avg("rating"))["rating__avg"]
+
+    class Meta:
+        model = WatchedMovie
+        fields = ["id", "title", "release_date", "total_views", "vote_average"]
+
+
 class WatchedMovieSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     poster_url = serializers.SerializerMethodField()
@@ -79,14 +96,6 @@ class ListTMDBMovieSerializer(serializers.Serializer):
             return None
 
         return get_backdrop_path(obj.get("backdrop_path"))
-
-
-class ListWatchedMovieSerializer(serializers.ModelSerializer):
-    view_details = serializers.HyperlinkedIdentityField(view_name="view-details-detail", lookup_field="id")
-
-    class Meta:
-        model = WatchedMovie
-        fields = ["id", "name", "release_date", "vote_average", "vote_count", "view_details"]
 
 
 class CreateViewDetailSerializer(serializers.ModelSerializer):
