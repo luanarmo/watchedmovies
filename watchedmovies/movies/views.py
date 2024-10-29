@@ -16,11 +16,17 @@ from . import filters, serializers, services
 class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     """Wiewset list watched movies"""
 
-    serializer_class = serializers.WatchedMovieSerializer
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
     pagination_class = CustomPagination
     filterset_class = filters.WatchedMovieFilter
+
+    def get_serializer_class(self):
+        actions = {
+            "list": serializers.ListWatchedMovieSerializer,
+            "retrieve": serializers.WatchedMovieSerializer,
+        }
+        return actions.get(self.action, serializers.DefaultSerializer)
 
     def get_queryset(self):
         profile = self.request.user.profile
