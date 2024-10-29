@@ -16,12 +16,19 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
     release_date = serializers.DateField()
     total_views = serializers.SerializerMethodField()
     vote_average = serializers.SerializerMethodField()
+    poster_url = serializers.SerializerMethodField()
 
     def get_total_views(self, obj):
         return ViewDetails.objects.filter(watched_movie=obj.id).count()
 
     def get_vote_average(self, obj):
         return ViewDetails.objects.filter(watched_movie=obj.id).aggregate(models.Avg("rating"))["rating__avg"]
+
+    def get_poster_url(self, obj):
+        if obj.poster_path == "" or obj.poster_path is None:
+            return None
+
+        return get_poster_path(obj.poster_path)
 
     class Meta:
         model = WatchedMovie
