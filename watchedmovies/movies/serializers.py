@@ -109,6 +109,7 @@ class CreateViewDetailSerializer(serializers.ModelSerializer):
     watched_movie = WatchedMovieSerializer(required=True)
     rating = serializers.IntegerField(min_value=1, max_value=10, required=False)
     comment = serializers.CharField(required=False, allow_blank=True)
+    watched_date = serializers.DateTimeField(format="%Y-%m-%d", required=False)
 
     class Meta:
         model = ViewDetails
