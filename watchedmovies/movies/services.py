@@ -1,3 +1,5 @@
+from datetime import date
+
 from watchedmovies.services import tmdb_api
 
 from .models import ViewDetails, WatchedMovie
@@ -11,11 +13,18 @@ def create_view_detail(
     comment: str,
     language: str,
     place: str,
+    watched_date: date,
 ) -> ViewDetails:
     """Create a new view detail with the given data."""
     watched_movie = get_or_create_watched_movie(watched_movie=watched_movie)
     view_detail = ViewDetails(
-        watched_movie=watched_movie, profile=profile, rating=rating, comment=comment, language=language, place=place
+        watched_movie=watched_movie,
+        profile=profile,
+        rating=rating,
+        comment=comment,
+        language=language,
+        place=place,
+        watched_date=watched_date,
     )
     view_detail.full_clean()
     view_detail.save()
