@@ -2,13 +2,17 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from . import serializers, services
+from .utils.validate_recaptcha import validate_recaptcha
 
 User = get_user_model()
 
@@ -33,8 +37,18 @@ class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.validated_data.pop("confirm_password")
+        token = serializer.validated_data.get("token")
+        serializer.validated_data.pop("token")
+        if not token:
+            raise ValidationError({"token": ["This field is required."]})
+        if not validate_recaptcha(token):
+            raise ValidationError({"token": ["Invalid recaptcha token."]})
+
         services.user_create(**serializer.validated_data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": "User created successfully."},
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=False, methods=["put"], url_path="change_password", url_name="change_password")
     @extend_schema(request=serializers.ChangePasswordSerializer, methods=["PUT"])
@@ -99,3 +113,16 @@ class UserViewSet(GenericViewSet):
         user = self.get_object()
         user.delete()
         return Response({"detail": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = TokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get("token")
+        if not token:
+            raise ValidationError({"token": ["This field is required."]})
+        if not validate_recaptcha(token):
+            raise ValidationError({"token": ["Invalid recaptcha token."]})
+
+        return super().post(request, *args, **kwargs)
