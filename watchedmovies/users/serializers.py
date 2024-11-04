@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from .models import Profile
-from .models import User as UserType
 
 User = get_user_model()
 
@@ -32,7 +31,7 @@ class ProfileSerializer(serializers.ModelSerializer[Profile]):
         fields = ("pk", "bio", "birth_date")
 
 
-class RegisterUserSerializer(serializers.ModelSerializer[UserType]):
+class RegisterUserSerializer(serializers.Serializer):
     """User serializer to register a new user"""
 
     name = serializers.CharField(required=False, max_length=255)
@@ -45,13 +44,10 @@ class RegisterUserSerializer(serializers.ModelSerializer[UserType]):
             )
         ],
     )
-    profile = ProfileSerializer()
+    profile = ProfileSerializer(required=False)
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     confirm_password = serializers.CharField(write_only=True, required=True)
-
-    class Meta:
-        model = User
-        fields = ("pk", "name", "email", "profile", "password", "confirm_password")
+    token = serializers.CharField()
 
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:
