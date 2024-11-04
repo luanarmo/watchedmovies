@@ -1,10 +1,10 @@
 from .models import Profile, User
 
 
-def user_create(*, name: str, email: str, profile: any, password: str) -> User:
+def user_create(*, email: str, profile: dict = {}, password: str) -> User:
     """Create a new user with the given data and send a welcome email to the user."""
     profile_data = profile
-    user = User(name=name, email=email)
+    user = User(email=email)
     user.set_password(password)
     user.full_clean()
     user.save()
