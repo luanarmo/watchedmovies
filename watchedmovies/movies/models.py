@@ -60,8 +60,9 @@ class ViewDetails(models.Model):
     watched_at = models.DateTimeField(auto_now_add=True)
     rating = models.PositiveIntegerField(null=True, blank=True)
     comment = models.TextField(blank=True)
-    language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default="en")
-    place = models.CharField(max_length=255, choices=PLACE_CHOICES, default="home")
+    language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, blank=True)
+    place = models.CharField(max_length=255, choices=PLACE_CHOICES, blank=True)
+    watched_date = models.DateField(null=True, blank=True)
 
     class Meta:
         verbose_name = "View Details"
