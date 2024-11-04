@@ -3,7 +3,9 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework_simplejwt.views import token_obtain_pair, token_refresh
+from rest_framework_simplejwt.views import token_refresh, token_verify
+
+from watchedmovies.users.views import CustomTokenObtainPairView
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
@@ -23,8 +25,9 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
-    path("api/auth/login/", token_obtain_pair),
+    path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", token_refresh),
+    path("api/auth/verify/", token_verify),
 ]
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
