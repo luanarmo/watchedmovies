@@ -30,8 +30,12 @@ def user_create(*, email: str, profile: dict = {}, password: str) -> User:
 
 
 def send_greeting_email(*, uid: str) -> None:
-    """Send a greeting email to the user."""
+    """Send a greeting email to the user with the given uid only if the user isn't active."""
     user = get_user_by_uid(uid)
+
+    if user.is_active:
+        return
+
     send_email(
         subject="Welcome to WatchedMovies",
         template="successful_registration.html",
