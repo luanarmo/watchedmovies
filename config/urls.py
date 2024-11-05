@@ -5,7 +5,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import token_refresh, token_verify
 
-from watchedmovies.users.views import CustomTokenObtainPairView
+from watchedmovies.users.views import CustomTokenObtainPairView, VerifyEmailTokenView
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
@@ -28,6 +28,7 @@ urlpatterns += [
     path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", token_refresh),
     path("api/auth/verify/", token_verify),
+    path("api/auth/verify_email/<uid>/<token>/", VerifyEmailTokenView.as_view(), name="verify_email"),
 ]
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
