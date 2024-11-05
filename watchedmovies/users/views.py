@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from . import serializers, services
+from .utils.generate_verification_token import validate_verification_token
 from .utils.validate_recaptcha import validate_recaptcha
 
 User = get_user_model()
@@ -126,3 +128,23 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             raise ValidationError({"token": ["Invalid recaptcha token."]})
 
         return super().post(request, *args, **kwargs)
+
+
+class VerifyEmailTokenView(GenericAPIView):
+    """
+    Verify the email token and activate the user account.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, uid, token):
+        """
+        Verify the email token and activate the user account
+        """
+
+        if not validate_verification_token(uid, token):
+            raise ValidationError({"detail": "Invalid verification token."})
+
+        services.send_greeting_email(uid=uid)
+
+        return Response({"detail": "Email verified successfully."})
