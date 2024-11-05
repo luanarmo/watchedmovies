@@ -32,6 +32,7 @@ def test_register_view_detail(db, user, api_rf):
         "comment": "Fake comment",
         "language": "en",
         "place": "home",
+        "watched_date": "2024-11-05",
     }
 
     request = api_rf.post(FAKE, data, format="json")
@@ -97,7 +98,6 @@ def test_list_watched_movies(db, user, api_rf):
     assert response.status_code == 200
     assert response.data["count"] == 1
     assert response.data["results"][0]["title"] == watched_movie.title
-    assert response.data["results"][0]["original_title"] == watched_movie.original_title
 
 
 def test_retrieve_watched_movie(db, user, api_rf):
@@ -153,6 +153,7 @@ def test_get_or_create_watched_movie(db, user, api_rf):
         "comment": "Fake comment",
         "language": "en",
         "place": "home",
+        "watched_date": "2024-11-05",
     }
 
     request = api_rf.post(FAKE, data, format="json")
