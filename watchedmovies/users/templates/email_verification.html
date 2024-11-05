@@ -1,0 +1,68 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify your email address</title>
+    <style>
+      /* Estilos para el contenedor principal */
+      .email-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      /* Estilos para el encabezado */
+      .email-container h1 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      /* Estilos para el subencabezado */
+      .email-container h2 {
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+
+      /* Estilos para el párrafo */
+      .email-container p {
+        color: #333;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      /* Estilos para el botón */
+      .email-container button {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        /* Transición suave */
+      }
+
+      /* Estilo de hover */
+      .email-container button:hover {
+        background-color: #0056b3;
+        /* Cambia el color al pasar el mouse */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <h1>Thanks for signing up!</h1>
+      <h2>Please verify your email address</h2>
+      <p>Click the button below to verify your email address and complete your registration.</p>
+      <button>
+        <a href="{{ url }}">Verify your email address</a>
+      </button>
+    </div>
+  </body>
+</html>
