@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from ..views import AnonymousUserViewset, UserViewSet
 from .factories import ProfileFactory, UserFactory
 
@@ -6,28 +8,35 @@ FAKE = "/fake-url/"
 
 def test_register_user(db, api_rf):
     data = {
-        "name": "One Test User",
         "email": "one@test.com",
         "profile": {"bio": "One", "birth_date": "1990-01-01"},
         "password": "TestPassword123",
         "confirm_password": "TestPassword123",
+        "token": "fake_token",
     }
     request = api_rf.post(FAKE, data, format="json")
-    response = AnonymousUserViewset.as_view({"post": "create"})(request)
+
+    with patch("watchedmovies.users.views.validate_recaptcha", return_value=True):
+        response = AnonymousUserViewset.as_view({"post": "create"})(request)
     assert response.status_code == 201
+    assert response.data["detail"] == "User created successfully."
 
 
 def test_tegister_user_profile_no_data(db, api_rf):
     data = {
-        "name": "Some Test User",
         "email": "some@test.com",
         "profile": {},
         "password": "Txxf8M47ODpPUv",
         "confirm_password": "Txxf8M47ODpPUv",
+        "token": "fake token",
     }
     request = api_rf.post(FAKE, data, format="json")
-    response = AnonymousUserViewset.as_view({"post": "create"})(request)
+
+    with patch("watchedmovies.users.views.validate_recaptcha", return_value=True):
+        response = AnonymousUserViewset.as_view({"post": "create"})(request)
+
     assert response.status_code == 201
+    assert response.data["detail"] == "User created successfully."
 
 
 def test_register_user_invalid_email(db, api_rf):
@@ -46,14 +55,17 @@ def test_register_user_invalid_email(db, api_rf):
 
 def test_register_user_passwords_do_not_match(db, api_rf):
     data = {
-        "name": "Three Test User",
         "email": "three@test.com",
         "profile": {"bio": "Three test bio", "birth_date": "1992-01-01"},
         "password": "TestPassword12345",
         "confirm_password": "TestPassword456",
+        "token": "fake token",
     }
     request = api_rf.post(FAKE, data, format="json")
-    response = AnonymousUserViewset.as_view({"post": "create"})(request)
+
+    with patch("watchedmovies.users.views.validate_recaptcha", return_value=True):
+        response = AnonymousUserViewset.as_view({"post": "create"})(request)
+
     assert response.status_code == 400
     assert response.data["confirm_password"][0] == "Passwords do not match."
 
