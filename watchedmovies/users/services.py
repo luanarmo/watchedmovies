@@ -16,7 +16,7 @@ def user_create(*, email: str, profile: dict = {}, password: str) -> User:
     profile.full_clean()  # Validate profile data
     profile.save()
 
-    frontend_url = env("FRONTEND_URL")
+    frontend_url = env("FRONTEND_URL", default="localhost")
     uid, token = generate_verification_token(user)
     verification_url = f"{frontend_url}#/verify/{uid}/{token}/"
 
