@@ -6,7 +6,7 @@ from config.settings.base import env
 
 
 def send_email(*, to: str, template: str = "", subject: str = "", context: dict = {}) -> None:
-    host_email = env("EMAIL_HOST_USER")
+    host_email = env("EMAIL_HOST_USER", default="")
     subject = subject or "WatchedMovies"
     html_message = render_to_string(template, context or {})
     plain_message = strip_tags(html_message)
