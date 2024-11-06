@@ -145,6 +145,7 @@ class VerifyEmailTokenView(GenericAPIView):
         if not validate_verification_token(uid, token):
             raise ValidationError({"detail": "Invalid verification token."})
 
-        services.send_greeting_email(uid=uid)
+        user = services.send_greeting_email(uid=uid)
+        user.is_active = True
 
         return Response({"detail": "Email verified successfully."})
