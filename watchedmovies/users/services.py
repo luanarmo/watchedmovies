@@ -36,10 +36,12 @@ def send_greeting_email(*, uid: str) -> User:
     if user.is_active:
         return
 
+    frontend_url = env("FRONTEND_URL", default="localhost")
+    home_url = f"{frontend_url}#/"
     send_email(
         subject="Welcome to WatchedMovies",
         template="successful_registration.html",
-        context={"name": user.name},
+        context={"email": user.email, "url": home_url},
         to=user.email,
     )
     return user
