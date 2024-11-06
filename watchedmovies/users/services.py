@@ -34,7 +34,7 @@ def send_greeting_email(*, uid: str) -> User:
     user = get_user_by_uid(uid)
 
     if user.is_active:
-        return
+        return user
 
     frontend_url = env("FRONTEND_URL", default="localhost")
     home_url = f"{frontend_url}#/"
