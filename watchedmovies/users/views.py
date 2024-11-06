@@ -147,5 +147,6 @@ class VerifyEmailTokenView(GenericAPIView):
 
         user = services.send_greeting_email(uid=uid)
         user.is_active = True
+        user.save()
 
         return Response({"detail": "Email verified successfully."})
