@@ -6,36 +6,99 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Successful registration</title>
+    <title>Successful Registration</title>
     <style>
-      /* Estilos para el contenedor principal */
+      /* Reset de márgenes y padding para asegurar consistencia */
+      body,
+      h1,
+      p,
+      a {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
+
+      /* Estilo del contenedor principal */
       .email-container {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 10px;
+        background-color: #f9fafb;
+        padding: 40px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
       }
 
-      /* Estilos para el encabezado */
+      /* Estilo del encabezado */
       .email-container h1 {
-        color: #333;
-        font-size: 24px;
+        color: #4A4A4A;
+        font-size: 28px;
         margin-bottom: 20px;
+        font-weight: bold;
       }
 
-      /* Estilos para el párrafo */
+      /* Estilo del párrafo */
       .email-container p {
-        color: #333;
+        color: #555;
         font-size: 16px;
-        margin-bottom: 20px;
+        line-height: 1.5;
+        margin-bottom: 25px;
+      }
+
+      /* Estilo del botón */
+      .email-container .cta-button {
+        display: inline-block;
+        background-color: #007bff;
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 12px 25px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+      }
+
+      .email-container .cta-button:hover {
+        background-color: #0056b3;
+      }
+
+      /* Estilo de la firma */
+      .email-footer {
+        margin-top: 40px;
+        font-size: 14px;
+        color: #aaa;
+      }
+
+      /* Media queries para mejorar la visualización en móviles */
+      @media (max-width: 600px) {
+        .email-container {
+          padding: 20px;
+        }
+
+        .email-container h1 {
+          font-size: 24px;
+        }
+
+        .email-container p {
+          font-size: 14px;
+        }
+
+        .email-container .cta-button {
+          font-size: 16px;
+          padding: 12px 20px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="email-container">
-      <h1>Hello {{ name }}!</h1>
-      <p>You have successfully registered to watchedmovies app!</p>
-      <p>Now you can start adding your favorite movies to your list.</p>
-      <p>Enjoy!</p>
+      <h1>🎉 Welcome, {{ email }}!</h1>
+      <p>Congratulations! You have successfully registered for the WatchMovies app</p>
+      <p>You're now ready to start adding your favorite movies to your list and discover amazing films</p>
+      <p>We hope you enjoy the app!</p>
+      <a href="{{ url }}" class="cta-button">Start Adding Movies</a>
+    </div>
+    <div class="email-footer">
+      <p>If you didn't sign up for an account, you can ignore this email.</p>
     </div>
   </body>
 </html>
