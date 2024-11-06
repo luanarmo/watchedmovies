@@ -29,7 +29,7 @@ def user_create(*, email: str, profile: dict = {}, password: str) -> User:
     return user
 
 
-def send_greeting_email(*, uid: str) -> None:
+def send_greeting_email(*, uid: str) -> User:
     """Send a greeting email to the user with the given uid only if the user isn't active."""
     user = get_user_by_uid(uid)
 
@@ -42,6 +42,7 @@ def send_greeting_email(*, uid: str) -> None:
         context={"name": user.name},
         to=user.email,
     )
+    return user
 
 
 def change_password(*, email: str, new_password: str) -> User:
