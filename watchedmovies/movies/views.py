@@ -1,3 +1,4 @@
+from django.db.models import Min
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
@@ -36,7 +37,12 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         profile = request.user.profile
-        page = self.paginate_queryset(queryset)
+        qs = (
+            WatchedMovie.objects.filter(view_details__profile=profile)
+            .annotate(first_watched_date=Min("view_details__watched_date"))
+            .order_by("-first_watched_date")
+        )
+        page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context={"profile": profile})
             return self.get_paginated_response(serializer.data)
