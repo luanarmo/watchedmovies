@@ -1,3 +1,10 @@
+import math
+import tempfile
+from typing import BinaryIO
+
+import requests
+from PIL import Image
+
 from config.settings.base import env
 
 from . import ImageSizes
@@ -17,3 +24,50 @@ def get_backdrop_path(image_path: str, size: str = "w780") -> str:
     if size not in ImageSizes.BACKDROP_SIZES:
         raise ValueError(f"Invalid image size: {size}")
     return f"{base_url}{size}{image_path}"
+
+
+def generate_collage(*, poster_urls: list) -> BinaryIO:
+    """Generate a collage from a list of poster URLs."""
+
+    WIDTH = env("COLLAGE_WIDTH", default=300)
+    HEIGHT = env("COLLAGE_HEIGHT", default=450)
+
+    images = [
+        open_image_generator(
+            image_path=get_poster_path(url),
+        )
+        for url in poster_urls
+    ]
+
+    # Calculate the number of rows and columns
+    n = len(images)
+    cols, rows = calculate_dimensions(n)
+
+    # Create base image
+    collage = Image.new("RGB", (cols * WIDTH, rows * HEIGHT))
+
+    # Paste images
+    for idx, img in enumerate(images):
+        x = WIDTH * (idx % cols)
+        y = HEIGHT * (idx // cols)
+        igm_resized = img.resize((WIDTH, HEIGHT))
+        collage.paste(igm_resized, (x, y))
+
+    # Save the collage to a temporary file
+    temp_path = tempfile.NamedTemporaryFile(delete=False, suffix=".jpeg")
+    collage.save(temp_path.name, "JPEG")
+    temp_path.seek(0)
+    return temp_path.read()
+
+
+def open_image_generator(*, image_path: str) -> Image:
+    """Open an image from a file path."""
+    response = requests.get(image_path, stream=True).raw
+    return Image.open(response)
+
+
+def calculate_dimensions(n: int) -> tuple:
+    """Calculate the number of rows and columns for a collage."""
+    cols = math.ceil(math.sqrt(n))
+    rows = math.ceil(n / cols)
+    return cols, rows
