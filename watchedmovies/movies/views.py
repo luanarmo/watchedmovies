@@ -67,6 +67,13 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         response["Content-Disposition"] = 'attachment; filename="collage.jpg"'
         return response
 
+    @action(detail=False, methods=["GET"])
+    def years(self, request, *args, **kwargs):
+        """Get years from watched movies"""
+        profile = request.user.profile
+        years = services.get_watched_register_years(profile=profile)
+        return Response(years, status=status.HTTP_200_OK)
+
 
 class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
     """Wiewset create, list, update, delete ViewDetail"""
