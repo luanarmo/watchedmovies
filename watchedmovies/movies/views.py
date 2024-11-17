@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
@@ -54,6 +55,17 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         profile = request.user.profile
         services.destroy_view_detail(watched_movie=watched_movie, profile=profile)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["GET"])
+    def posters(self, request, *args, **kwargs):
+        """Get posters from watched movies"""
+        profile = request.user.profile
+        collage = services.create_collage(
+            profile=profile,
+        )
+        response = HttpResponse(collage, content_type="image/jpeg")
+        response["Content-Disposition"] = 'attachment; filename="collage.jpg"'
+        return response
 
 
 class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
