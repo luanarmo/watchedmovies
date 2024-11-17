@@ -67,3 +67,9 @@ def create_collage(*, profile: Profile) -> str:
     )
 
     return generate_collage(poster_urls=watched_movies)
+
+
+def get_watched_register_years(*, profile: Profile) -> dict:
+    """Get the years in which the user registered watched movies."""
+    years = ViewDetails.objects.filter(profile=profile).values_list("watched_at__year", flat=True)
+    return {"years": list(set(years))}
