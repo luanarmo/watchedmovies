@@ -1,8 +1,10 @@
 from datetime import date
 
 from watchedmovies.services import tmdb_api
+from watchedmovies.users.models import Profile
 
 from .models import ViewDetails, WatchedMovie
+from .utils import generate_collage
 
 
 def create_view_detail(
@@ -56,3 +58,12 @@ def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
 def destroy_view_detail(*, watched_movie: WatchedMovie, profile) -> None:
     """Delete the view details of the given watched movie."""
     ViewDetails.objects.filter(watched_movie=watched_movie, profile=profile).delete()
+
+
+def create_collage(*, profile: Profile) -> str:
+    """Create a collage from a list of poster URLs."""
+    watched_movies = (
+        WatchedMovie.objects.filter(view_details__profile=profile).distinct().values_list("poster_path", flat=True)
+    )
+
+    return generate_collage(poster_urls=watched_movies)
