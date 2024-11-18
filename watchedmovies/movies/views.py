@@ -1,6 +1,7 @@
 from django.db.models import Min
 from django.http import HttpResponse
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,7 +13,8 @@ from watchedmovies.movies.models import ViewDetails, WatchedMovie
 
 from ..pagination import CustomPagination
 from ..services import tmdb_api
-from . import filters, serializers, services
+from . import filters as custom_filters
+from . import serializers, services
 
 
 class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -21,7 +23,10 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     permission_classes = [IsAuthenticated]
     throttle_classes = [UserRateThrottle]
     pagination_class = CustomPagination
-    filterset_class = filters.WatchedMovieFilter
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    filterset_class = custom_filters.WatchedMovieFilter
+    ordering_fields = ["first_watched_date", "title"]
+    ordering = ["-first_watched_date"]
 
     def get_serializer_class(self):
         actions = {
@@ -32,17 +37,14 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     def get_queryset(self):
         profile = self.request.user.profile
-        return WatchedMovie.objects.filter(view_details__profile=profile).distinct()
+        return WatchedMovie.objects.filter(view_details__profile=profile).annotate(
+            first_watched_date=Min("view_details__watched_date")
+        )
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         profile = request.user.profile
-        qs = (
-            WatchedMovie.objects.filter(view_details__profile=profile)
-            .annotate(first_watched_date=Min("view_details__watched_date"))
-            .order_by("-first_watched_date")
-        )
-        page = self.paginate_queryset(qs)
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context={"profile": profile})
             return self.get_paginated_response(serializer.data)
@@ -63,12 +65,10 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=["GET"])
-    def posters(self, request, *args, **kwargs):
+    def posters(self, request, year: str = None, ordering: str = None, *args, **kwargs):
         """Get posters from watched movies"""
-        profile = request.user.profile
-        collage = services.create_collage(
-            profile=profile,
-        )
+        queryset = self.filter_queryset(self.get_queryset())
+        collage = services.create_collage(queryset=queryset)
         response = HttpResponse(collage, content_type="image/jpeg")
         response["Content-Disposition"] = 'attachment; filename="collage.jpg"'
         return response
@@ -88,7 +88,7 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
     throttle_classes = [UserRateThrottle]
     serializer_class = serializers.ListViewDetailSerializer
     pagination_class = CustomPagination
-    filterset_class = filters.ViewDetailFilter
+    filterset_class = custom_filters.ViewDetailFilter
 
     def get_serializer_class(self):
         actions = {
