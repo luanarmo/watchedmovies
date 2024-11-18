@@ -1,7 +1,5 @@
 from datetime import date
 
-from django.db.models import Min
-
 from watchedmovies.services import tmdb_api
 from watchedmovies.users.models import Profile
 
@@ -62,19 +60,25 @@ def destroy_view_detail(*, watched_movie: WatchedMovie, profile) -> None:
     ViewDetails.objects.filter(watched_movie=watched_movie, profile=profile).delete()
 
 
-def create_collage(*, profile: Profile) -> str:
+def create_collage(
+    *,
+    queryset: list,
+) -> str:
     """Create a collage from a list of poster URLs."""
-    watched_movies = (
-        WatchedMovie.objects.filter(view_details__profile=profile)
-        .annotate(first_watched_date=Min("view_details__watched_date"))
-        .order_by("-first_watched_date")
-        .values_list("poster_path", flat=True)
-    )
+    watched_movies = queryset.values_list("poster_path", flat=True)
 
     return generate_collage(poster_urls=watched_movies)
 
 
 def get_watched_register_years(*, profile: Profile) -> dict:
     """Get the years in which the user registered watched movies."""
-    years = ViewDetails.objects.filter(profile=profile).values_list("watched_at__year", flat=True)
-    return {"years": list(set(years))}
+    years = (
+        ViewDetails.objects.filter(profile=profile)
+        .order_by("-watched_date")
+        .values_list("watched_date__year", flat=True)
+    )
+
+    unique_years = list(set(years))
+    ordered_years = sorted(unique_years, reverse=True)
+
+    return {"years": ordered_years}
