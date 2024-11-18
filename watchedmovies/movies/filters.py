@@ -6,15 +6,15 @@ from .models import ViewDetails, WatchedMovie
 class WatchedMovieFilter(django_filters.FilterSet):
     """Filter for watched movies."""
 
+    watched_date_year = django_filters.NumberFilter(method="filter_watched_date_year")
+
     class Meta:
         model = WatchedMovie
-        fields = {
-            "title": ["exact", "icontains"],
-            "original_title": ["exact", "icontains"],
-            "release_date": ["exact", "year__gt", "year__lt"],
-            "vote_average": ["exact", "gt", "lt"],
-            "popularity": ["exact", "gt", "lt"],
-        }
+        fields = {"title": ["icontains"], "original_title": ["icontains"]}
+
+    def filter_watched_date_year(self, queryset, name, value):
+        """Filter watched movies by first watched date."""
+        return queryset.filter(view_details__watched_date__year=value)
 
 
 class ViewDetailFilter(django_filters.FilterSet):
