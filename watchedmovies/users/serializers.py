@@ -69,10 +69,12 @@ class UpdateUserSerializer(serializers.ModelSerializer):
     """User serializer to update user information"""
 
     profile = ProfileSerializer()
+    email = serializers.CharField(read_only=True)
+    pk = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
-        fields = ("profile", "name")
+        fields = ("profile", "name", "email", "pk")
 
 
 class ChangePasswordSerializer(serializers.Serializer):
