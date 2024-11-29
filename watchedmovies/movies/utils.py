@@ -1,5 +1,6 @@
 import math
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from typing import BinaryIO
 
 import requests
@@ -32,12 +33,9 @@ def generate_collage(*, poster_urls: list) -> BinaryIO:
     WIDTH = env("COLLAGE_WIDTH", default=300)
     HEIGHT = env("COLLAGE_HEIGHT", default=450)
 
-    images = [
-        open_image_generator(
-            image_path=get_poster_path(url),
-        )
-        for url in poster_urls
-    ]
+    # Fetch and open images concurrently
+    with ThreadPoolExecutor() as executor:
+        images = list(executor.map(open_image_generator, poster_urls))
 
     # Calculate the number of rows and columns
     n = len(images)
@@ -60,9 +58,10 @@ def generate_collage(*, poster_urls: list) -> BinaryIO:
     return temp_path.read()
 
 
-def open_image_generator(*, image_path: str) -> Image:
+def open_image_generator(image_path: str) -> Image:
     """Open an image from a file path."""
-    response = requests.get(image_path, stream=True).raw
+    path = get_poster_path(image_path)
+    response = requests.get(path, stream=True).raw
     return Image.open(response)
 
 
