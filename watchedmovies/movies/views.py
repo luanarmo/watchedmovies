@@ -80,6 +80,15 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         years = services.get_watched_register_years(profile=profile)
         return Response(years, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["GET"])
+    def wrapped(self, request, *args, **kwargs):
+        """Get statistics from watched movies"""
+        profile = request.user.profile
+        wrapped = services.create_wrapped(profile=profile)
+        response = HttpResponse(wrapped, content_type="image/png")
+        response["Content-Disposition"] = 'attachment; filename="wrapped.png"'
+        return response
+
 
 class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
     """Wiewset create, list, update, delete ViewDetail"""
