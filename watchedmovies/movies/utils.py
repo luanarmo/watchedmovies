@@ -185,3 +185,40 @@ def load_font(path: str, size: int) -> ImageFont:
         return ImageFont.truetype(path, size)
     except OSError:
         return ImageFont.load_default()
+
+
+def create_wrapped_poster(
+    wrapped_data: dict,
+    poster_path: str = "watchedmovies/assets/images/template.png",
+) -> BinaryIO:
+    """Crea un póster con el título de una película envuelto en una imagen."""
+
+    font_large = load_font(
+        "watchedmovies/assets/fonts/JetBrains/static/JetBrainsMono-Bold.ttf",
+        90,
+    )
+    font_small = load_font(
+        "watchedmovies/assets/fonts/JetBrains/static/JetBrainsMono-Regular.ttf",
+        40,
+    )
+
+    canvas = Canvas(
+        bg_img_path=poster_path,
+        x_pos=200,
+        y_pos=1000,
+        y_spacing=150,
+    )
+
+    canvas.set_strategy(TwoColumnRenderStrategy())
+
+    lines = []
+    for item in wrapped_data.values():
+        lines.extend(
+            [
+                TextLine(text=item["text"], font=font_small, color=(110, 110, 110)),
+                TextLine(text=str(item["value"]), font=font_large, color=(77, 77, 77)),
+            ]
+        )
+
+    canvas.render_text(lines)
+    return canvas.save()
