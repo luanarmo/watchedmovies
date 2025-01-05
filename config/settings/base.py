@@ -261,8 +261,8 @@ REST_FRAMEWORK = {
 }
 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html#settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=14),
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
