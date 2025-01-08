@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -30,7 +29,7 @@ class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
     def get_serializer_class(self):
         actions = {
             "create": serializers.RegisterUserSerializer,
-            "change_password": serializers.ChangePasswordSerializer,
+            "send_password_reset_email": serializers.ResetPasswordSerializer,
         }
         return actions.get(self.action, serializers.DefaultSerializer)
 
@@ -52,15 +51,14 @@ class AnonymousUserViewset(CreateModelMixin, GenericViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(detail=False, methods=["put"], url_path="change_password", url_name="change_password")
-    @extend_schema(request=serializers.ChangePasswordSerializer, methods=["PUT"])
-    def change_password(self, request, *args, **kwargs):
-        """Change the password of the user with the given email"""
+    @action(detail=False, methods=["post"], url_name="send_password_reset_email", url_path="send_password_reset_email")
+    def send_password_reset_email(self, request, *args, **kwargs):
+        """Send a password reset email to the user with the given email"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        services.change_password(email=data["email"], new_password=data["new_password"])
-        return Response({"detail": "Password changed successfully."})
+        email = serializer.validated_data.get("email")
+        services.send_password_reset_email(email=email)
+        return Response({"detail": "Password reset email sent successfully."})
 
 
 class UserViewSet(GenericViewSet):
@@ -152,3 +150,26 @@ class VerifyEmailTokenView(GenericAPIView):
             user.save()
 
         return Response({"detail": "Email verified successfully."})
+
+
+class VerifyResetPasswordTokenView(GenericAPIView):
+    """
+    Verify the reset password token and activate the user account.
+    """
+
+    serializer_class = serializers.ChangePasswordSerializer
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, uid, token):
+        """
+        Verify the reset password token and activate the user account
+        """
+
+        password = request.data.get("new_password")
+
+        if not validate_verification_token(uid, token):
+            raise ValidationError({"detail": "Invalid verification token."})
+
+        services.change_password(uid=uid, new_password=password)
+        return Response({"detail": "Password changed successfully."})
