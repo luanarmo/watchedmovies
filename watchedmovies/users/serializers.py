@@ -77,31 +77,24 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         fields = ("profile", "name", "email", "pk")
 
 
-class ChangePasswordSerializer(serializers.Serializer):
-    """Serializer to change user password"""
+class ResetPasswordSerializer(serializers.Serializer):
+    """Serializer to reset user password"""
 
-    old_password = serializers.CharField(required=True, write_only=True)
-    new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
-    confirm_password = serializers.CharField(required=True, write_only=True)
     email = serializers.EmailField(required=True)
-
-    def validate(self, data):
-        old_password = data["old_password"]
-        email = data["email"]
-        user = User.objects.get(email=email)
-
-        if not user.check_password(old_password):
-            raise serializers.ValidationError({"old_password": "Old password is incorrect."})
-
-        if data["new_password"] != data["confirm_password"]:
-            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
-
-        if data["old_password"] == data["new_password"]:
-            raise serializers.ValidationError({"new_password": "New password must be different from old password."})
-
-        return data
 
     def validate_email(self, value):
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("User does not exist.")
         return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer to change user password"""
+
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        return attrs
