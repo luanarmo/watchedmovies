@@ -47,9 +47,9 @@ def send_greeting_email(*, uid: str) -> User:
     return user
 
 
-def change_password(*, email: str, new_password: str) -> User:
+def change_password(*, uid: str, new_password: str) -> User:
     """Change the password of the user with the given email."""
-    user = User.objects.get(email=email)
+    user = get_user_by_uid(uid)
     user.set_password(new_password)
     user.full_clean()
     user.save()
@@ -69,3 +69,19 @@ def user_update(*, user: User, name: str = None, profile: dict = None) -> User:
         user.profile.save()
 
     return user
+
+
+def send_password_reset_email(*, email: str) -> None:
+    """Send a reset password email to the user with the given email."""
+    user = User.objects.get(email=email)
+
+    frontend_url = env("FRONTEND_URL", default="localhost")
+    uid, token = generate_verification_token(user)
+    reset_password_url = f"{frontend_url}#/resetPassword/{uid}/{token}/"
+
+    send_email(
+        subject="Reset your password",
+        template="reset_password.html",
+        context={"url": reset_password_url},
+        to=user.email,
+    )
