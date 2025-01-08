@@ -124,7 +124,7 @@ def create_wrapped(*, profile: Profile) -> dict:
             else:
                 genres[genre_name] = {"name": genre_name, "count": 1}
 
-    favorite_genre = max(genres.values(), key=lambda x: x["count"])["name"]
+    favorite_genre = max(genres.values(), key=lambda x: x["count"])["name"] if genres else 0
 
     # Obtener las fechas de visualización
     watched_dates = ViewDetails.objects.filter(profile=profile, watched_date__year=current_year).values_list(
@@ -151,10 +151,12 @@ def create_wrapped(*, profile: Profile) -> dict:
     # Asegurarse de considerar la última racha
     max_streak = max(max_streak, current_streak)
 
+    favorite_movie_title = favorite_movie[0]["watched_movie__title"] if favorite_movie else ""
+
     wrapped_data = {
         "favorite_movie": {
             "text": "Pelicula favorita: ",
-            "value": favorite_movie[0]["watched_movie__title"],
+            "value": favorite_movie_title,
         },
         "total_watched_movies": {"text": "Total peliculas: ", "value": total_watched_movies},
         "total_hours_watched": {"text": "Horas vistas: ", "value": total_hours_watched},
