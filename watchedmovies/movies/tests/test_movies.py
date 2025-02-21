@@ -100,6 +100,27 @@ def test_list_watched_movies(db, user, api_rf):
     assert response.data["results"][0]["title"] == watched_movie.title
 
 
+def test_list_watched_movies_filter_by_watched_date_year(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+
+    first_watched_movie = WatchedMovieFactory()
+    second_watched_movie = WatchedMovieFactory()
+    third_watched_movie = WatchedMovieFactory()
+
+    ViewDetailFactory(profile=profile, watched_movie=second_watched_movie, watched_date="2022-01-01")
+    ViewDetailFactory(profile=profile, watched_movie=first_watched_movie, watched_date="2021-12-31")
+    ViewDetailFactory(profile=profile, watched_movie=third_watched_movie, watched_date="2022-01-02")
+
+    # -first_watched_date&watched_date_year=2025
+    request = api_rf.get(FAKE, {"watched_date_year": 2022, "ordering": "-first_watched_date"})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert response.data["count"] == 2
+    assert response.data["results"][0]["title"] == third_watched_movie.title
+
+
 def test_retrieve_watched_movie(db, user, api_rf):
     profile = ProfileFactory(user=user)
     watched_movie = WatchedMovieFactory()
