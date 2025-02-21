@@ -67,7 +67,7 @@ class ViewDetails(models.Model):
     class Meta:
         verbose_name = "View Details"
         verbose_name_plural = "View Details"
-        ordering = ["-watched_at"]
+        ordering = ["watched_date"]
 
     def __str__(self):
         return f"{self.profile.user.name} watched {self.watched_movie.title}"
