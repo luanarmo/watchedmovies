@@ -147,7 +147,6 @@ def test_update_user(db, api_rf):
     request = api_rf.put(FAKE, data, format="json")
     request.user = user
     response = UserViewSet.as_view({"put": "update_user"})(request)
-    print(response.data)
     assert response.status_code == 200
     assert response.data["name"] == data["name"]
     assert response.data["profile"]["bio"] == data["profile"]["bio"]

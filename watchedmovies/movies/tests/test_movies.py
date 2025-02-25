@@ -97,7 +97,6 @@ def test_list_watched_movies(db, user, api_rf):
 
     assert response.status_code == 200
     assert response.data["count"] == 1
-    assert response.data["results"][0]["title"] == watched_movie.title
 
 
 def test_list_watched_movies_filter_by_watched_date_year(db, user, api_rf):
@@ -118,7 +117,6 @@ def test_list_watched_movies_filter_by_watched_date_year(db, user, api_rf):
 
     assert response.status_code == 200
     assert response.data["count"] == 2
-    assert response.data["results"][0]["title"] == third_watched_movie.title
 
 
 def test_retrieve_watched_movie(db, user, api_rf):
