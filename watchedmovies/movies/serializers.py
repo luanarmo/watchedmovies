@@ -12,8 +12,6 @@ class DefaultSerializer(serializers.Serializer):
 
 
 class ListWatchedMovieSerializer(serializers.ModelSerializer):
-    title = serializers.CharField()
-    release_date = serializers.DateField()
     total_views = serializers.SerializerMethodField()
     vote_average = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()
@@ -36,7 +34,7 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WatchedMovie
-        fields = ["id", "title", "release_date", "total_views", "vote_average", "poster_url"]
+        fields = ["id", "total_views", "vote_average", "poster_url"]
 
 
 class WatchedMovieSerializer(serializers.ModelSerializer):
@@ -130,6 +128,7 @@ class ListViewDetailSerializer(serializers.ModelSerializer):
     language = serializers.CharField(source="get_language_display")
     place = serializers.CharField(source="get_place_display")
     watched_at = serializers.DateTimeField(format="%Y-%m")
+    watched_date = serializers.DateTimeField(format="%Y-%m-%d")
 
     class Meta:
         model = ViewDetails
