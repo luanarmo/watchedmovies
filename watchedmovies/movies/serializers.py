@@ -128,7 +128,7 @@ class ListViewDetailSerializer(serializers.ModelSerializer):
     language = serializers.CharField(source="get_language_display")
     place = serializers.CharField(source="get_place_display")
     watched_at = serializers.DateTimeField(format="%Y-%m")
-    watched_date = serializers.DateTimeField(format="%Y-%m-%d")
+    watched_date = serializers.DateField(format="%Y-%m-%d")
 
     class Meta:
         model = ViewDetails
