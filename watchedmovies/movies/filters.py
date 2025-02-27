@@ -14,7 +14,7 @@ class WatchedMovieFilter(django_filters.FilterSet):
 
     def filter_watched_date_year(self, queryset, name, value):
         """Filter watched movies by first watched date."""
-        return queryset.filter(view_details__watched_date__year=value)
+        return queryset.filter(view_details__watched_date__year=value, view_details__profile=self.request.user.profile)
 
 
 class ViewDetailFilter(django_filters.FilterSet):
