@@ -1,4 +1,4 @@
-from django.db.models import Min
+from django.db.models import Max
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
@@ -38,7 +38,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     def get_queryset(self):
         profile = self.request.user.profile
         return WatchedMovie.objects.filter(view_details__profile=profile).annotate(
-            first_watched_date=Min("view_details__watched_date")
+            first_watched_date=Max("view_details__watched_date")
         )
 
     def list(self, request, *args, **kwargs):
