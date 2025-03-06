@@ -1,15 +1,18 @@
 import math
 from datetime import date, timedelta
 
+from django.db import transaction
 from django.db.models import Count, Sum
+from rest_framework.exceptions import ValidationError
 
 from watchedmovies.services import tmdb_api
 from watchedmovies.users.models import Profile
 
-from .models import ViewDetails, WatchedMovie
+from .models import PlanToWatch, ViewDetails, WatchedMovie
 from .utils import create_wrapped_poster, generate_collage
 
 
+@transaction.atomic
 def create_view_detail(
     *,
     watched_movie: dict,
@@ -20,8 +23,9 @@ def create_view_detail(
     place: str,
     watched_date: date,
 ) -> ViewDetails:
-    """Create a new view detail with the given data."""
+    """Create a new view detail with the given data and remove the movie from the plan to watch list if it exists."""
     watched_movie = get_or_create_watched_movie(watched_movie=watched_movie)
+    delete_from_plan_to_watch(movie_id=watched_movie.id, profile=profile)
     view_detail = ViewDetails(
         watched_movie=watched_movie,
         profile=profile,
@@ -34,6 +38,45 @@ def create_view_detail(
     view_detail.full_clean()
     view_detail.save()
     return view_detail
+
+
+def delete_from_plan_to_watch(*, movie_id: int, profile: any) -> None:
+    """Delete a movie from the plan to watch list."""
+    plan = PlanToWatch.objects.filter(movie__id=movie_id, profile=profile).first()
+
+    if not plan:
+        return None
+
+    plan.delete()
+
+
+@transaction.atomic
+def create_plan_to_watch(*, movie: dict, profile: any) -> PlanToWatch:
+    """Create a new plan to watch with the given data."""
+    movie = get_or_create_watched_movie(watched_movie=movie)
+
+    # Check if the movie is already in the plan to watch list or watched list
+    if PlanToWatch.objects.filter(movie=movie, profile=profile).exists():
+        raise ValidationError("This movie is already in your plan to watch list.")
+
+    if ViewDetails.objects.filter(watched_movie=movie, profile=profile).exists():
+        raise ValidationError("This movie is already in your watched list.")
+
+    plan_to_watch = PlanToWatch(
+        movie=movie,
+        profile=profile,
+    )
+    plan_to_watch.full_clean()
+    plan_to_watch.save()
+    return plan_to_watch
+
+
+def retrieve_plan_to_watch_by_movie_id(*, movie_id: int, profile: any) -> PlanToWatch:
+    """Retrieve a plan to watch by movie ID."""
+    plan = PlanToWatch.objects.filter(movie__id=movie_id, profile=profile).first()
+    if not plan:
+        raise ValidationError("This movie is not in your plan to watch list.")
+    return plan
 
 
 def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
