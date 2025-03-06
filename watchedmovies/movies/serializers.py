@@ -1,7 +1,7 @@
 from django.db import models
 from rest_framework import serializers
 
-from watchedmovies.movies.models import ViewDetails, WatchedMovie
+from watchedmovies.movies.models import PlanToWatch, ViewDetails, WatchedMovie
 from watchedmovies.movies.utils import get_backdrop_path, get_poster_path
 
 
@@ -9,6 +9,20 @@ class DefaultSerializer(serializers.Serializer):
     """Default serializer to handle empty requests"""
 
     pass
+
+
+class BaseMovieToWatchSerializer(serializers.ModelSerializer):
+    poster_url = serializers.SerializerMethodField()
+
+    def get_poster_url(self, obj):
+        if obj.poster_path == "" or obj.poster_path is None:
+            return None
+
+        return get_poster_path(obj.poster_path)
+
+    class Meta:
+        model = WatchedMovie
+        fields = ["id", "title", "poster_url"]
 
 
 class ListWatchedMovieSerializer(serializers.ModelSerializer):
@@ -133,3 +147,19 @@ class ListViewDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ViewDetails
         exclude = ["profile", "watched_movie"]
+
+
+class CreatePlanToWatchSerializer(serializers.ModelSerializer):
+    movie = WatchedMovieSerializer(required=True)
+
+    class Meta:
+        model = PlanToWatch
+        exclude = ["profile"]
+
+
+class ListPlanToWatchSerializer(serializers.ModelSerializer):
+    movie = BaseMovieToWatchSerializer(required=True)
+
+    class Meta:
+        model = PlanToWatch
+        exclude = ["profile"]
