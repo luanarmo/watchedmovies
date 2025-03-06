@@ -71,3 +71,20 @@ class ViewDetails(models.Model):
 
     def __str__(self):
         return f"{self.profile.user.name} watched {self.watched_movie.title}"
+
+
+class PlanToWatch(models.Model):
+    """Model that represents a movie that the user plans to watch."""
+
+    movie = models.ForeignKey(WatchedMovie, on_delete=models.CASCADE, related_name="plan_to_watch")
+    profile = models.ForeignKey("users.Profile", on_delete=models.CASCADE, related_name="plan_to_watch")
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Plan to Watch"
+        verbose_name_plural = "Plans to Watch"
+        ordering = ["-added_at"]
+        unique_together = ["movie", "profile"]
+
+    def __str__(self):
+        return f"{self.profile.user.name} plans to watch {self.movie.title}"
