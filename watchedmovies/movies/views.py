@@ -3,13 +3,13 @@ from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.viewsets import GenericViewSet
 
-from watchedmovies.movies.models import ViewDetails, WatchedMovie
+from watchedmovies.movies.models import PlanToWatch, ViewDetails, WatchedMovie
 
 from ..pagination import CustomPagination
 from ..services import tmdb_api
@@ -160,3 +160,44 @@ class TMDBViewSet(GenericViewSet):
         serialized = serializers.ListTMDBMovieSerializer(data=finded_movies, many=True)
         serialized.is_valid(raise_exception=True)
         return Response(serialized.data, status=status.HTTP_200_OK)
+
+
+class PlanToWatchViewSet(GenericViewSet, ListModelMixin, DestroyModelMixin):
+    """Viewset for PlanToWatch model"""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+    serializer_class = serializers.ListPlanToWatchSerializer
+    pagination_class = CustomPagination
+
+    def get_serializer_class(self):
+        actions = {
+            "list": serializers.ListPlanToWatchSerializer,
+            "create": serializers.CreatePlanToWatchSerializer,
+        }
+        return actions.get(self.action, serializers.DefaultSerializer)
+
+    def get_queryset(self):
+        return PlanToWatch.objects.filter(profile=self.request.user.profile)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.CreatePlanToWatchSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        plan_to_watch = services.create_plan_to_watch(**serializer.validated_data, profile=request.user.profile)
+        return Response(serializers.ListPlanToWatchSerializer(plan_to_watch).data, status=status.HTTP_201_CREATED)
+
+    def retrieve(self, request, *args, **kwargs):
+        id = kwargs.get("pk")
+        plan = services.retrieve_plan_to_watch_by_movie_id(movie_id=id, profile=request.user.profile)
+        serialized = serializers.ListPlanToWatchSerializer(plan)
+        return Response(serialized.data)
