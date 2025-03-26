@@ -92,7 +92,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
     original_language = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     original_title = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     overview = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    popularity = serializers.DecimalField(max_digits=20, decimal_places=14, allow_null=True, required=False)
+    popularity = serializers.DecimalField(max_digits=40, decimal_places=20, allow_null=True, required=False)
     poster_path = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_date = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     title = serializers.CharField(allow_blank=True, allow_null=True, required=False)
