@@ -10,7 +10,7 @@ class WatchedMovie(models.Model):
     original_language = models.CharField(max_length=10)
     original_title = models.CharField(max_length=510)
     overview = models.TextField(blank=True)
-    popularity = models.DecimalField(max_digits=20, decimal_places=14)
+    popularity = models.DecimalField(max_digits=40, decimal_places=20)
     poster_path = models.CharField(max_length=255, blank=True)
     release_date = models.DateField(null=True, blank=True)
     title = models.CharField(max_length=510)
