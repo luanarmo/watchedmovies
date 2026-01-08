@@ -130,24 +130,24 @@ def get_watched_register_years(*, profile: Profile) -> dict:
     return {"years": ordered_years}
 
 
-def create_wrapped(*, profile: Profile) -> dict:
+def create_wrapped(*, profile: Profile, year: int) -> dict:
     """Get statistics from watched movies."""
 
-    current_year = date.today().year
+    year = year if year else date.today().year
 
     total_watched_movies = ViewDetails.objects.filter(
         profile=profile,
-        watched_date__year=current_year,
+        watched_date__year=year,
     ).count()
 
-    total_minutes_watched = ViewDetails.objects.filter(profile=profile, watched_date__year=current_year).aggregate(
+    total_minutes_watched = ViewDetails.objects.filter(profile=profile, watched_date__year=year).aggregate(
         total_hours=Sum("watched_movie__runtime")
     )["total_hours"]
 
     total_hours_watched = math.ceil(total_minutes_watched / 60) if total_minutes_watched else 0
 
     favorite_movie = (
-        ViewDetails.objects.filter(profile=profile, watched_date__year=current_year)
+        ViewDetails.objects.filter(profile=profile, watched_date__year=year)
         .values("watched_movie__title")
         .annotate(watched_times=Count("watched_movie__title"))
         .order_by("-watched_times")[:1]
@@ -156,7 +156,7 @@ def create_wrapped(*, profile: Profile) -> dict:
     # Filtrar los detalles de las películas y contar las veces que aparece cada género.
     watched_movies_details = ViewDetails.objects.filter(
         profile=profile,
-        watched_date__year=current_year,
+        watched_date__year=year,
     ).values("watched_movie__more_details")
     genres = {}
     for movie in watched_movies_details:
@@ -170,7 +170,7 @@ def create_wrapped(*, profile: Profile) -> dict:
     favorite_genre = max(genres.values(), key=lambda x: x["count"])["name"] if genres else 0
 
     # Obtener las fechas de visualización
-    watched_dates = ViewDetails.objects.filter(profile=profile, watched_date__year=current_year).values_list(
+    watched_dates = ViewDetails.objects.filter(profile=profile, watched_date__year=year).values_list(
         "watched_date", flat=True
     )
 
