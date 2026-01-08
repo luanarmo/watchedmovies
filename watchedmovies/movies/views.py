@@ -65,7 +65,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=["GET"])
-    def posters(self, request, year: str = None, ordering: str = None, *args, **kwargs):
+    def posters(self, request, *args, **kwargs):
         """Get posters from watched movies"""
         queryset = self.filter_queryset(self.get_queryset())
         collage = services.create_collage(queryset=queryset)
@@ -83,8 +83,9 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     @action(detail=False, methods=["GET"])
     def wrapped(self, request, *args, **kwargs):
         """Get statistics from watched movies"""
-        profile = request.user.profile
-        wrapped = services.create_wrapped(profile=profile)
+        wrapped = services.create_wrapped(
+            profile=request.user.profile, year=request.query_params.get("watched_date_year")
+        )
         response = HttpResponse(wrapped, content_type="image/png")
         response["Content-Disposition"] = 'attachment; filename="wrapped.png"'
         return response
