@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from watchedmovies.movies.services import get_or_create_watched_movie
 from watchedmovies.users.tests.factories import ProfileFactory
 
 from ..models import ViewDetails, WatchedMovie
@@ -191,3 +194,59 @@ def test_get_or_create_watched_movie(db, user, api_rf):
     assert response.status_code == 201
 
     assert WatchedMovie.objects.count() == 1
+
+
+BASE_MOVIE_DATA = {
+    "id": 99,
+    "adult": False,
+    "backdrop_path": "/fake/",
+    "genre_ids": "[1]",
+    "original_language": "en",
+    "original_title": "Original Title",
+    "overview": "overview",
+    "popularity": 7.5,
+    "poster_path": "/fake/",
+    "release_date": "2022-06-15",
+    "title": "Title",
+    "video": False,
+    "vote_average": 8.0,
+    "vote_count": 200,
+}
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
+def test_get_or_create_finds_by_original_title_and_release_date(mock_details, db):
+    movie = get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+    found = get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+
+    assert WatchedMovie.objects.count() == 1
+    assert found.id == movie.id
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
+def test_get_or_create_finds_by_title_when_original_title_is_none(mock_details, db):
+    movie = get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+    data_without_original = {**BASE_MOVIE_DATA, "original_title": None}
+    found = get_or_create_watched_movie(watched_movie=data_without_original)
+
+    assert WatchedMovie.objects.count() == 1
+    assert found.id == movie.id
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
+def test_get_or_create_creates_new_when_no_match(mock_details, db):
+    different_data = {**BASE_MOVIE_DATA, "original_title": "Different", "title": "Different Title", "id": 100}
+    get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+    get_or_create_watched_movie(watched_movie=different_data)
+
+    assert WatchedMovie.objects.count() == 2
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
+def test_get_or_create_no_duplicate_when_second_call_has_only_title(mock_details, db):
+    get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+    data_title_only = {**BASE_MOVIE_DATA, "original_title": None}
+    found = get_or_create_watched_movie(watched_movie=data_title_only)
+
+    assert WatchedMovie.objects.count() == 1
+    assert found.title == BASE_MOVIE_DATA["title"]

@@ -82,8 +82,16 @@ def retrieve_plan_to_watch_by_movie_id(*, movie_id: int, profile: any) -> PlanTo
 def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
     """Get or create a watched movie with the given data."""
     original_title = watched_movie.get("original_title")
+    title = watched_movie.get("title")
     release_date = watched_movie.get("release_date")
-    movie_exists = WatchedMovie.objects.filter(original_title=original_title, release_date=release_date).first()
+
+    movie_exists = None
+
+    if original_title:
+        movie_exists = WatchedMovie.objects.filter(original_title=original_title, release_date=release_date).first()
+
+    if not movie_exists and title:
+        movie_exists = WatchedMovie.objects.filter(title=title, release_date=release_date).first()
 
     if movie_exists:
         return movie_exists
