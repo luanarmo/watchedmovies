@@ -222,10 +222,12 @@ def create_wrapped(*, profile: Profile, year: int) -> dict:
 
 def get_stats(*, profile: Profile, year: int = None) -> dict:
     """Return JSON statistics for the user's watched movies."""
-    current_year = date.today().year
-    year = int(year) if year else current_year
-
-    base_qs = ViewDetails.objects.filter(profile=profile, watched_date__year=year)
+    if year:
+        year = int(year)
+        base_qs = ViewDetails.objects.filter(profile=profile, watched_date__year=year)
+    else:
+        year = None
+        base_qs = ViewDetails.objects.filter(profile=profile)
     all_qs = ViewDetails.objects.filter(profile=profile)
 
     # Totals
