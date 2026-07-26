@@ -39,12 +39,17 @@ def get_popular_movies():
     return response.json()
 
 
-def search_movies(query):
+def search_movies(query, page=1):
     """Search movies by a query"""
-    url = f"{BASE_URL}/search/movie?query={query}"
+    url = f"{BASE_URL}/search/movie?query={query}&page={page}"
     response = make_request(url)
 
     if response.status_code != 200:
-        return json.dumps([])
+        return {"results": [], "total_pages": 1, "total_results": 0}
 
-    return response.json()["results"]
+    data = response.json()
+    return {
+        "results": data["results"],
+        "total_pages": data["total_pages"],
+        "total_results": data["total_results"],
+    }

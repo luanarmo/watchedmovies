@@ -157,10 +157,19 @@ class TMDBViewSet(GenericViewSet):
     @action(detail=False, methods=["GET"], url_path="search-movies/(?P<query>[^/.]+)")
     def search_movies(self, request, query: str = None, *args, **kwargs):
         """Search movies"""
-        finded_movies = tmdb_api.search_movies(query)
-        serialized = serializers.ListTMDBMovieSerializer(data=finded_movies, many=True)
+        page = int(request.query_params.get("page", 1))
+        data = tmdb_api.search_movies(query, page)
+        serialized = serializers.ListTMDBMovieSerializer(data=data["results"], many=True)
         serialized.is_valid(raise_exception=True)
-        return Response(serialized.data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "results": serialized.data,
+                "total_pages": data["total_pages"],
+                "total_results": data["total_results"],
+                "page": page,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class PlanToWatchViewSet(GenericViewSet, ListModelMixin, DestroyModelMixin):
