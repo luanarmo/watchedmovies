@@ -1,8 +1,10 @@
+import calendar as cal
 import math
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Count, Sum
+from django.db.models import Avg, Count, Sum
+from django.db.models.functions import ExtractMonth, ExtractWeekDay, ExtractYear
 from rest_framework.exceptions import ValidationError
 
 from watchedmovies.services import tmdb_api
@@ -216,3 +218,152 @@ def create_wrapped(*, profile: Profile, year: int) -> dict:
     }
 
     return create_wrapped_poster(wrapped_data)
+
+
+def get_stats(*, profile: Profile, year: int = None) -> dict:
+    """Return JSON statistics for the user's watched movies."""
+    current_year = date.today().year
+    year = int(year) if year else current_year
+
+    base_qs = ViewDetails.objects.filter(profile=profile, watched_date__year=year)
+    all_qs = ViewDetails.objects.filter(profile=profile)
+
+    # Totals
+    total_watched = base_qs.count()
+    total_unique_movies = base_qs.values("watched_movie").distinct().count()
+    rewatch_count = total_watched - total_unique_movies
+    total_runtime_minutes = base_qs.aggregate(total=Sum("watched_movie__runtime"))["total"] or 0
+
+    avg_raw = base_qs.aggregate(avg=Avg("rating"))["avg"]
+    average_rating = round(float(avg_raw), 1) if avg_raw else None
+
+    # Top 5 most-rewatched movies
+    favorite_movie_qs = base_qs.values("watched_movie__title").annotate(count=Count("id")).order_by("-count")[:5]
+    favorite_movie = [{"title": m["watched_movie__title"], "count": m["count"]} for m in favorite_movie_qs]
+
+    # Genres from more_details JSON
+    genres: dict = {}
+    for row in base_qs.values("watched_movie__more_details"):
+        details = row.get("watched_movie__more_details") or {}
+        for genre in details.get("genres", []):
+            name = genre.get("name")
+            if name:
+                genres[name] = genres.get(name, 0) + 1
+
+    genres_list = sorted([{"name": n, "count": c} for n, c in genres.items()], key=lambda x: x["count"], reverse=True)
+    favorite_genre = genres_list[0]["name"] if genres_list else None
+
+    # By language
+    language_labels = dict(ViewDetails.LANGUAGE_CHOICES)
+    by_language = [
+        {"key": row["language"], "label": language_labels.get(row["language"], row["language"]), "count": row["count"]}
+        for row in base_qs.values("language").annotate(count=Count("id")).order_by("-count")
+        if row["language"]
+    ]
+
+    # By place
+    place_labels = dict(ViewDetails.PLACE_CHOICES)
+    by_place = [
+        {"key": row["place"], "label": place_labels.get(row["place"], row["place"]), "count": row["count"]}
+        for row in base_qs.values("place").annotate(count=Count("id")).order_by("-count")
+        if row["place"]
+    ]
+
+    # By rating — always 1-10, fill missing with 0
+    rating_counts = {
+        row["rating"]: row["count"]
+        for row in base_qs.values("rating").annotate(count=Count("id"))
+        if row["rating"] is not None
+    }
+    by_rating = [{"rating": r, "count": rating_counts.get(r, 0)} for r in range(1, 11)]
+
+    # By month — always 12 entries
+    month_counts = {
+        row["month"]: row["count"]
+        for row in base_qs.filter(watched_date__isnull=False)
+        .annotate(month=ExtractMonth("watched_date"))
+        .values("month")
+        .annotate(count=Count("id"))
+    }
+    by_month = [{"month": cal.month_abbr[m], "month_number": m, "count": month_counts.get(m, 0)} for m in range(1, 13)]
+    most_active_month_entry = max(by_month, key=lambda x: x["count"]) if any(x["count"] for x in by_month) else None
+    most_active_month = (
+        most_active_month_entry["month"] if most_active_month_entry and most_active_month_entry["count"] > 0 else None
+    )
+
+    # By day of week — Django ExtractWeekDay: 1=Sunday … 7=Saturday
+    dow_names = {1: "Sunday", 2: "Monday", 3: "Tuesday", 4: "Wednesday", 5: "Thursday", 6: "Friday", 7: "Saturday"}
+    dow_counts = {
+        row["dow"]: row["count"]
+        for row in base_qs.filter(watched_date__isnull=False)
+        .annotate(dow=ExtractWeekDay("watched_date"))
+        .values("dow")
+        .annotate(count=Count("id"))
+    }
+    by_day_of_week = [{"day": dow_names[d], "day_number": d, "count": dow_counts.get(d, 0)} for d in range(1, 8)]
+
+    # By year — all-time, no year filter, includes avg_rating
+    by_year = [
+        {
+            "year": row["year"],
+            "count": row["count"],
+            "avg_rating": round(float(row["avg_rating"]), 1) if row["avg_rating"] else None,
+        }
+        for row in all_qs.filter(watched_date__isnull=False)
+        .annotate(year=ExtractYear("watched_date"))
+        .values("year")
+        .annotate(count=Count("id"), avg_rating=Avg("rating"))
+        .order_by("year")
+    ]
+
+    # Streak — deduplicate same-day entries
+    raw_dates = list(base_qs.filter(watched_date__isnull=False).values_list("watched_date", flat=True))
+    unique_dates = sorted(set(raw_dates))
+
+    max_streak = 0
+    max_start = None
+    max_end = None
+
+    if unique_dates:
+        cur_streak = 1
+        cur_start = unique_dates[0]
+
+        for i in range(1, len(unique_dates)):
+            if unique_dates[i] - unique_dates[i - 1] == timedelta(days=1):
+                cur_streak += 1
+            else:
+                if cur_streak > max_streak:
+                    max_streak = cur_streak
+                    max_start = cur_start
+                    max_end = unique_dates[i - 1]
+                cur_streak = 1
+                cur_start = unique_dates[i]
+
+        if cur_streak > max_streak:
+            max_streak = cur_streak
+            max_start = cur_start
+            max_end = unique_dates[-1]
+
+    return {
+        "year": year,
+        "total_watched": total_watched,
+        "total_unique_movies": total_unique_movies,
+        "rewatch_count": rewatch_count,
+        "total_runtime_minutes": total_runtime_minutes,
+        "average_rating": average_rating,
+        "favorite_movie": favorite_movie,
+        "favorite_genre": favorite_genre,
+        "most_active_month": most_active_month,
+        "max_streak": {
+            "days": max_streak,
+            "start_date": max_start.isoformat() if max_start else None,
+            "end_date": max_end.isoformat() if max_end else None,
+        },
+        "genres": genres_list,
+        "by_language": by_language,
+        "by_place": by_place,
+        "by_rating": by_rating,
+        "by_month": by_month,
+        "by_day_of_week": by_day_of_week,
+        "by_year": by_year,
+    }

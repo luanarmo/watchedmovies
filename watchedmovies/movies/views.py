@@ -90,6 +90,13 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         response["Content-Disposition"] = 'attachment; filename="wrapped.png"'
         return response
 
+    @action(detail=False, methods=["GET"])
+    def stats(self, request, *args, **kwargs):
+        """Get JSON statistics for the current user's watched movies."""
+        year = request.query_params.get("year")
+        data = services.get_stats(profile=request.user.profile, year=year)
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin):
     """Wiewset create, list, update, delete ViewDetail"""
