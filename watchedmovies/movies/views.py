@@ -27,6 +27,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     pagination_class = CustomPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     filterset_class = custom_filters.WatchedMovieFilter
+    search_fields = ["title", "original_title"]
     ordering_fields = ["first_watched_date", "title"]
     ordering = ["-first_watched_date"]
 
