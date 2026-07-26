@@ -14,7 +14,7 @@ class DefaultSerializer(serializers.Serializer):
 class BaseMovieToWatchSerializer(serializers.ModelSerializer):
     poster_url = serializers.SerializerMethodField()
 
-    def get_poster_url(self, obj):
+    def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
             return None
 
@@ -30,17 +30,17 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
     vote_average = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()
 
-    def get_total_views(self, obj):
+    def get_total_views(self, obj) -> int:
         profile = self.context.get("profile")
         return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).count()
 
-    def get_vote_average(self, obj):
+    def get_vote_average(self, obj) -> float | None:
         profile = self.context.get("profile")
         return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).aggregate(models.Avg("rating"))[
             "rating__avg"
         ]
 
-    def get_poster_url(self, obj):
+    def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
             return None
 
@@ -58,23 +58,23 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
     total_views = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
 
-    def get_poster_url(self, obj):
+    def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
             return None
 
         return get_poster_path(obj.poster_path)
 
-    def get_backdrop_url(self, obj):
+    def get_backdrop_url(self, obj) -> str | None:
         if obj.backdrop_path == "" or obj.backdrop_path is None:
             return None
 
         return get_backdrop_path(obj.backdrop_path)
 
-    def get_total_views(self, obj):
+    def get_total_views(self, obj) -> int:
         profile = self.context.get("profile")
         return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).count()
 
-    def get_average_rating(self, obj):
+    def get_average_rating(self, obj) -> float | None:
         profile = self.context.get("profile")
         ratings = ViewDetails.objects.filter(watched_movie=obj.id, profile=profile)
         return ratings.aggregate(models.Avg("rating"))["rating__avg"]
@@ -102,7 +102,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
     poster_url = serializers.SerializerMethodField()
     backdrop_url = serializers.SerializerMethodField()
 
-    def get_poster_url(self, obj):
+    def get_poster_url(self, obj) -> str | None:
         if obj is None:
             return None
 
@@ -111,7 +111,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
 
         return get_poster_path(obj.get("poster_path"))
 
-    def get_backdrop_url(self, obj):
+    def get_backdrop_url(self, obj) -> str | None:
         if obj is None:
             return None
 

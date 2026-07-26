@@ -1,6 +1,8 @@
 from django.db.models import Max
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.openapi import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
@@ -36,6 +38,8 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return actions.get(self.action, serializers.DefaultSerializer)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return WatchedMovie.objects.none()
         profile = self.request.user.profile
         return WatchedMovie.objects.filter(view_details__profile=profile).annotate(
             first_watched_date=Max("view_details__watched_date")
@@ -118,6 +122,8 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
         return actions.get(self.action, serializers.DefaultSerializer)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ViewDetails.objects.none()
         return ViewDetails.objects.filter(profile=self.request.user.profile)
 
     def create(self, request, *args, **kwargs):
@@ -144,6 +150,7 @@ class TMDBViewSet(GenericViewSet):
     def get_queryset(self):
         pass
 
+    @extend_schema(parameters=[OpenApiParameter("movie_id", OpenApiTypes.INT, OpenApiParameter.PATH)])
     @action(detail=False, methods=["GET"], url_path="movie-details/(?P<movie_id>[^/.]+)")
     def movie_details(self, request, movie_id: int = None, *args, **kwargs):
         """Get movie details"""
@@ -161,6 +168,7 @@ class TMDBViewSet(GenericViewSet):
         serialized.is_valid(raise_exception=True)
         return Response(serialized.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[OpenApiParameter("query", OpenApiTypes.STR, OpenApiParameter.PATH)])
     @action(detail=False, methods=["GET"], url_path="search-movies/(?P<query>[^/.]+)")
     def search_movies(self, request, query: str = None, *args, **kwargs):
         """Search movies"""
@@ -195,6 +203,8 @@ class PlanToWatchViewSet(GenericViewSet, ListModelMixin, DestroyModelMixin):
         return actions.get(self.action, serializers.DefaultSerializer)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return PlanToWatch.objects.none()
         return PlanToWatch.objects.filter(profile=self.request.user.profile)
 
     def list(self, request, *args, **kwargs):

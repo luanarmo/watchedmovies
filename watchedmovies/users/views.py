@@ -1,4 +1,7 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.openapi import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -128,6 +131,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return super().post(request, *args, **kwargs)
 
 
+_uid_token_params = [
+    OpenApiParameter("uid", OpenApiTypes.STR, OpenApiParameter.PATH),
+    OpenApiParameter("token", OpenApiTypes.STR, OpenApiParameter.PATH),
+]
+
+
+@extend_schema(
+    parameters=_uid_token_params,
+    responses={200: inline_serializer(name="VerifyEmailResponse", fields={"detail": drf_serializers.CharField()})},
+)
 class VerifyEmailTokenView(GenericAPIView):
     """
     Verify the email token and activate the user account.
@@ -152,6 +165,7 @@ class VerifyEmailTokenView(GenericAPIView):
         return Response({"detail": "Email verified successfully."})
 
 
+@extend_schema(parameters=_uid_token_params)
 class VerifyResetPasswordTokenView(GenericAPIView):
     """
     Verify the reset password token and activate the user account.
