@@ -1,4 +1,3 @@
-from django.db import models
 from rest_framework import serializers
 
 from watchedmovies.movies.models import PlanToWatch, ViewDetails, WatchedMovie
@@ -31,14 +30,11 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
     poster_url = serializers.SerializerMethodField()
 
     def get_total_views(self, obj) -> int:
-        profile = self.context.get("profile")
-        return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).count()
+        return getattr(obj, "total_views", 0) or 0
 
     def get_vote_average(self, obj) -> float | None:
-        profile = self.context.get("profile")
-        return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).aggregate(models.Avg("rating"))[
-            "rating__avg"
-        ]
+        val = getattr(obj, "avg_rating", None)
+        return round(float(val), 1) if val else None
 
     def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
@@ -71,13 +67,11 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
         return get_backdrop_path(obj.backdrop_path)
 
     def get_total_views(self, obj) -> int:
-        profile = self.context.get("profile")
-        return ViewDetails.objects.filter(watched_movie=obj.id, profile=profile).count()
+        return getattr(obj, "total_views", 0) or 0
 
     def get_average_rating(self, obj) -> float | None:
-        profile = self.context.get("profile")
-        ratings = ViewDetails.objects.filter(watched_movie=obj.id, profile=profile)
-        return ratings.aggregate(models.Avg("rating"))["rating__avg"]
+        val = getattr(obj, "avg_rating", None)
+        return round(float(val), 1) if val else None
 
     class Meta:
         model = WatchedMovie

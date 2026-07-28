@@ -1,4 +1,4 @@
-from django.db.models import Max
+from django.db.models import Avg, Count, Max, Q
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiTypes
@@ -19,7 +19,7 @@ from . import filters as custom_filters
 from . import serializers, services
 
 
-class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
+class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, DestroyModelMixin):
     """Wiewset list watched movies"""
 
     permission_classes = [IsAuthenticated]
@@ -43,7 +43,9 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             return WatchedMovie.objects.none()
         profile = self.request.user.profile
         return WatchedMovie.objects.filter(view_details__profile=profile).annotate(
-            first_watched_date=Max("view_details__watched_date")
+            first_watched_date=Max("view_details__watched_date"),
+            total_views=Count("view_details", filter=Q(view_details__profile=profile)),
+            avg_rating=Avg("view_details__rating", filter=Q(view_details__profile=profile)),
         )
 
     def list(self, request, *args, **kwargs):
