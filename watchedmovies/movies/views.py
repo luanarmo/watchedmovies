@@ -161,7 +161,17 @@ class TMDBViewSet(GenericViewSet):
         serialized = serializers.ListTMDBMovieSerializer(data=movie_details)
         serialized.is_valid(raise_exception=True)
 
-        return Response(serialized.data, status=status.HTTP_200_OK)
+        data = dict(serialized.data)
+        data["is_watched"] = False
+        data["is_plan_to_watch"] = False
+
+        if request.user.is_authenticated:
+            profile = request.user.profile
+            movie_id_int = int(movie_id)
+            data["is_watched"] = WatchedMovie.objects.filter(id=movie_id_int, view_details__profile=profile).exists()
+            data["is_plan_to_watch"] = PlanToWatch.objects.filter(movie__id=movie_id_int, profile=profile).exists()
+
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["GET"])
     def popular_movies(self, request, *args, **kwargs):
