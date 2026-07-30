@@ -20,9 +20,9 @@ def create_view_detail(
     watched_movie: dict,
     profile: any,
     rating: int = None,
-    comment: str,
-    language: str,
-    place: str,
+    comment: str = "",
+    language: str = "",
+    place: str = "",
     watched_date: date,
     is_favorite: bool = False,
 ) -> ViewDetails:
