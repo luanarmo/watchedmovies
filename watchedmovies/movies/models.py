@@ -63,6 +63,7 @@ class ViewDetails(models.Model):
     language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, blank=True)
     place = models.CharField(max_length=255, choices=PLACE_CHOICES, blank=True)
     watched_date = models.DateField(null=True, blank=True)
+    is_favorite = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "View Details"

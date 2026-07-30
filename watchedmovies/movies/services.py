@@ -24,6 +24,7 @@ def create_view_detail(
     language: str,
     place: str,
     watched_date: date,
+    is_favorite: bool = False,
 ) -> ViewDetails:
     """Create a new view detail with the given data and remove the movie from the plan to watch list if it exists."""
     watched_movie = get_or_create_watched_movie(watched_movie=watched_movie)
@@ -36,6 +37,7 @@ def create_view_detail(
         language=language,
         place=place,
         watched_date=watched_date,
+        is_favorite=is_favorite,
     )
     view_detail.full_clean()
     view_detail.save()

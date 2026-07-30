@@ -28,6 +28,7 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
     total_views = serializers.SerializerMethodField()
     vote_average = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     def get_total_views(self, obj) -> int:
         return getattr(obj, "total_views", 0) or 0
@@ -42,9 +43,12 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
 
         return get_poster_path(obj.poster_path)
 
+    def get_is_favorite(self, obj) -> bool:
+        return getattr(obj, "is_favorite", False) or False
+
     class Meta:
         model = WatchedMovie
-        fields = ["id", "total_views", "vote_average", "poster_url"]
+        fields = ["id", "total_views", "vote_average", "poster_url", "is_favorite"]
 
 
 class WatchedMovieSerializer(serializers.ModelSerializer):
@@ -53,6 +57,7 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
     backdrop_url = serializers.SerializerMethodField()
     total_views = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
@@ -72,6 +77,9 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
     def get_average_rating(self, obj) -> float | None:
         val = getattr(obj, "avg_rating", None)
         return round(float(val), 1) if val else None
+
+    def get_is_favorite(self, obj) -> bool:
+        return getattr(obj, "is_favorite", False) or False
 
     class Meta:
         model = WatchedMovie
