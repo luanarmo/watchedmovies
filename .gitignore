@@ -278,3 +278,6 @@ watchedmovies/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Dependabot auto-review loop state (local log only; real state lives in GitHub labels)
+.claude/loop-state/

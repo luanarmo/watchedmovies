@@ -9,7 +9,7 @@ Documentation can be written as rst files in `watchedmovies/docs`.
 
 To build and serve docs, use the commands::
 
-    docker compose -f local.yml up docs
+    podman compose -f local.yml up docs
 
 
 
@@ -35,4 +35,4 @@ To compile all docstrings automatically into documentation source files, use the
 This can be done in the docker container:
     ::
 
-        docker run --rm docs make apidocs
+        podman run --rm docs make apidocs
