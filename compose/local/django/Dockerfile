@@ -1,5 +1,5 @@
 # define an alias for the specific python version used in this file.
-FROM python:3.11.15-slim-bookworm as python
+FROM python:3.11.16-slim-bookworm as python
 
 # Python build stage
 FROM python as python-build-stage
