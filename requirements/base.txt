@@ -4,13 +4,13 @@ hiredis==3.4.1  # https://github.com/redis/hiredis-py
 Pillow==12.1.0  # https://github.com/python-pillow/Pillow
 # Django
 # ------------------------------------------------------------------------------
-django==5.1  # pyup: < 5.0  # https://www.djangoproject.com/
+django==5.2.17  # https://www.djangoproject.com/
 django-environ==0.11.2  # https://github.com/joke2k/django-environ
 django-redis==5.4.0  # https://github.com/jazzband/django-redis
 django-filter==24.3 #https://django-filter.readthedocs.io
 argon2-cffi==25.1.0
 # Django REST Framework
-djangorestframework==3.15.2  # https://github.com/encode/django-rest-framework
+djangorestframework==3.18.1  # https://github.com/encode/django-rest-framework
 django-cors-headers==4.9.0  # https://github.com/adamchainz/django-cors-headers
 djangorestframework-simplejwt==5.5.1 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
 
