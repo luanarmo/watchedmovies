@@ -6,7 +6,7 @@ Pillow==12.3.0  # https://github.com/python-pillow/Pillow
 # ------------------------------------------------------------------------------
 django==6.1.1  # https://www.djangoproject.com/
 django-environ==0.14.0  # https://github.com/joke2k/django-environ
-django-redis==5.4.0  # https://github.com/jazzband/django-redis
+django-redis==7.0.0  # https://github.com/jazzband/django-redis
 django-filter==24.3 #https://django-filter.readthedocs.io
 argon2-cffi==25.1.0
 # Django REST Framework
