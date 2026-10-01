@@ -196,6 +196,53 @@ def test_get_or_create_watched_movie(db, user, api_rf):
     assert WatchedMovie.objects.count() == 1
 
 
+def test_watched_movie_total_views_after_watching_twice(db, user, api_rf):
+    ProfileFactory(user=user)
+    movie_data = {
+        "id": 1,
+        "adult": False,
+        "backdrop_path": "/fake-backdrop-path/",
+        "genre_ids": "[1, 2, 3]",
+        "original_language": "en",
+        "original_title": "Fake Original Title",
+        "overview": "Fake overview",
+        "popularity": 9.99,
+        "poster_path": "/fake-poster-path/",
+        "release_date": "2021-01-01",
+        "title": "Fake Title",
+        "video": False,
+        "vote_average": 9.99,
+        "vote_count": 100,
+    }
+
+    data = {
+        "watched_movie": movie_data,
+        "rating": 5,
+        "comment": "Fake comment",
+        "language": "en",
+        "place": "home",
+        "watched_date": "2024-11-05",
+    }
+
+    for _ in range(2):
+        request = api_rf.post(FAKE, data, format="json")
+        request.user = user
+        response = ViewDetailViewSet.as_view({"post": "create"})(request)
+        assert response.status_code == 201
+
+    assert WatchedMovie.objects.count() == 1
+    assert ViewDetails.objects.count() == 2
+
+    watched_movie = WatchedMovie.objects.get()
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "retrieve"})(request, pk=watched_movie.id)
+
+    assert response.status_code == 200
+    assert response.data["total_views"] == 2
+
+
 BASE_MOVIE_DATA = {
     "id": 99,
     "adult": False,
