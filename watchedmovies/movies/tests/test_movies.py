@@ -196,6 +196,161 @@ def test_get_or_create_watched_movie(db, user, api_rf):
     assert WatchedMovie.objects.count() == 1
 
 
+def test_watched_movie_total_views_after_watching_twice(db, user, api_rf):
+    ProfileFactory(user=user)
+    movie_data = {
+        "id": 1,
+        "adult": False,
+        "backdrop_path": "/fake-backdrop-path/",
+        "genre_ids": "[1, 2, 3]",
+        "original_language": "en",
+        "original_title": "Fake Original Title",
+        "overview": "Fake overview",
+        "popularity": 9.99,
+        "poster_path": "/fake-poster-path/",
+        "release_date": "2021-01-01",
+        "title": "Fake Title",
+        "video": False,
+        "vote_average": 9.99,
+        "vote_count": 100,
+    }
+
+    data = {
+        "watched_movie": movie_data,
+        "rating": 5,
+        "comment": "Fake comment",
+        "language": "en",
+        "place": "home",
+        "watched_date": "2024-11-05",
+    }
+
+    for _ in range(2):
+        request = api_rf.post(FAKE, data, format="json")
+        request.user = user
+        response = ViewDetailViewSet.as_view({"post": "create"})(request)
+        assert response.status_code == 201
+
+    assert WatchedMovie.objects.count() == 1
+    assert ViewDetails.objects.count() == 2
+
+    watched_movie = WatchedMovie.objects.get()
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "retrieve"})(request, pk=watched_movie.id)
+
+    assert response.status_code == 200
+    assert response.data["total_views"] == 2
+
+
+def test_list_watched_movies_filter_by_year_counts_only_that_year_views(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    watched_movie = WatchedMovieFactory()
+
+    # objects.create: ViewDetailFactory uses get_or_create on (watched_movie, profile),
+    # so it can't create several views of the same movie for the same profile.
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-09-25")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10")
+    ViewDetails.objects.create(profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05")
+
+    request = api_rf.get(FAKE, {"watched_date_year": 2026, "ordering": "-first_watched_date"})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["id"] == watched_movie.id
+    assert response.data["results"][0]["total_views"] == 2
+
+
+def test_list_watched_movies_filter_by_year_averages_only_that_year_ratings(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    watched_movie = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01", rating=4)
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-09-25", rating=2)
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10", rating=5)
+    ViewDetails.objects.create(profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05", rating=1)
+
+    request = api_rf.get(FAKE, {"watched_date_year": 2026})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert response.data["results"][0]["vote_average"] == 3.0
+
+
+def test_list_watched_movies_filter_by_year_is_favorite_only_from_that_year(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    favorite_other_year = WatchedMovieFactory()
+    favorite_this_year = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=favorite_other_year, watched_date="2026-03-01")
+    ViewDetails.objects.create(
+        profile=profile, watched_movie=favorite_other_year, watched_date="2025-03-01", is_favorite=True
+    )
+    ViewDetails.objects.create(
+        profile=other_profile, watched_movie=favorite_other_year, watched_date="2026-03-01", is_favorite=True
+    )
+    ViewDetails.objects.create(
+        profile=profile, watched_movie=favorite_this_year, watched_date="2026-06-01", is_favorite=True
+    )
+
+    request = api_rf.get(FAKE, {"watched_date_year": 2026})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    is_favorite_by_id = {movie["id"]: movie["is_favorite"] for movie in response.data["results"]}
+    assert is_favorite_by_id == {favorite_other_year.id: False, favorite_this_year.id: True}
+
+
+def test_list_watched_movies_filter_by_year_orders_by_that_year_last_view(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    rewatched_next_year = WatchedMovieFactory()
+    watched_mid_year = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=rewatched_next_year, watched_date="2026-02-01")
+    ViewDetails.objects.create(profile=profile, watched_movie=rewatched_next_year, watched_date="2027-01-15")
+    ViewDetails.objects.create(profile=other_profile, watched_movie=rewatched_next_year, watched_date="2026-12-31")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_mid_year, watched_date="2026-06-01")
+
+    request = api_rf.get(FAKE, {"watched_date_year": 2026, "ordering": "-first_watched_date"})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert [movie["id"] for movie in response.data["results"]] == [watched_mid_year.id, rewatched_next_year.id]
+
+
+def test_list_watched_movies_without_year_aggregates_all_years_for_own_profile(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    watched_movie = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01", rating=4)
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10", rating=2)
+    ViewDetails.objects.create(
+        profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05", rating=1, is_favorite=True
+    )
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert response.data["count"] == 1
+    movie = response.data["results"][0]
+    assert movie["total_views"] == 2
+    assert movie["vote_average"] == 3.0
+    assert movie["is_favorite"] is False
+
+
 BASE_MOVIE_DATA = {
     "id": 99,
     "adult": False,
