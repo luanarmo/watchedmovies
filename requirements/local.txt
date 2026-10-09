@@ -19,7 +19,7 @@ sphinx-autobuild==2025.8.25 # https://github.com/GaretJax/sphinx-autobuild
 
 # Code quality
 # ------------------------------------------------------------------------------
-flake8==7.1.1  # https://github.com/PyCQA/flake8
+flake8==7.4.1  # https://github.com/PyCQA/flake8
 flake8-isort==7.0.0  # https://github.com/gforcada/flake8-isort
 coverage==7.16.0  # https://github.com/nedbat/coveragepy
 black==26.5.1  # https://github.com/psf/black
