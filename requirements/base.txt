@@ -4,7 +4,7 @@ hiredis==3.4.2  # https://github.com/redis/hiredis-py
 Pillow==12.3.0  # https://github.com/python-pillow/Pillow
 # Django
 # ------------------------------------------------------------------------------
-django==6.1.1  # https://www.djangoproject.com/
+django==6.1.2  # https://www.djangoproject.com/
 django-environ==0.14.0  # https://github.com/joke2k/django-environ
 django-redis==7.0.0  # https://github.com/jazzband/django-redis
 django-filter==26.2 #https://django-filter.readthedocs.io
