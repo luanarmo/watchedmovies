@@ -44,6 +44,16 @@ def create_view_detail(
     return view_detail
 
 
+@transaction.atomic
+def update_view_detail(*, view_detail: ViewDetails, **data) -> ViewDetails:
+    """Update the given view detail with the given data."""
+    for field, value in data.items():
+        setattr(view_detail, field, value)
+    view_detail.full_clean()
+    view_detail.save()
+    return view_detail
+
+
 def delete_from_plan_to_watch(*, movie_id: int, profile: any) -> None:
     """Delete a movie from the plan to watch list."""
     plan = PlanToWatch.objects.filter(movie__id=movie_id, profile=profile).first()

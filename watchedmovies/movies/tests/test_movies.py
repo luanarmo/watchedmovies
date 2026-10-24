@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import pytest
+
 from watchedmovies.movies.services import get_or_create_watched_movie
 from watchedmovies.users.tests.factories import ProfileFactory
 
@@ -87,6 +89,97 @@ def test_update_view_detail(db, user, api_rf):
     assert response.status_code == 200
     assert response.data["rating"] == 4
     assert response.data["comment"] == "Updated comment"
+
+
+def test_update_view_detail_returns_labels_and_codes(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    data = {"language": "es", "place": "cinema"}
+
+    request = api_rf.patch(FAKE, data, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
+
+    assert response.status_code == 200
+    assert response.data["language"] == "Spanish"
+    assert response.data["language_code"] == "es"
+    assert response.data["place"] == "Movie Theater"
+    assert response.data["place_code"] == "cinema"
+
+
+# One request per test: DRF marks the test transaction for rollback on a 4xx under ATOMIC_REQUESTS.
+@pytest.mark.parametrize("rating", [0, 11])
+def test_update_view_detail_rejects_out_of_range_rating(db, user, api_rf, rating):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    request = api_rf.patch(FAKE, {"rating": rating}, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
+
+    assert response.status_code == 400
+
+
+def test_update_view_detail_clears_rating(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile, rating=5)
+
+    request = api_rf.patch(FAKE, {"rating": None}, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
+
+    assert response.status_code == 200
+    assert response.data["rating"] is None
+    view_detail.refresh_from_db()
+    assert view_detail.rating is None
+
+
+def test_update_view_detail_of_other_profile_returns_404(db, user, api_rf):
+    ProfileFactory(user=user)
+    other_view_detail = ViewDetailFactory(profile=ProfileFactory())
+
+    request = api_rf.patch(FAKE, {"rating": 3}, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=other_view_detail.id)
+
+    assert response.status_code == 404
+
+
+def test_full_update_view_detail(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    data = {
+        "rating": 7,
+        "comment": "Full update",
+        "language": "fr",
+        "place": "home",
+        "watched_date": "2025-03-10",
+        "is_favorite": True,
+    }
+
+    request = api_rf.put(FAKE, data, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"put": "update"})(request, pk=view_detail.id)
+
+    assert response.status_code == 200
+    assert response.data["rating"] == 7
+    assert response.data["watched_date"] == "2025-03-10"
+    assert response.data["is_favorite"] is True
+
+
+def test_list_view_details_includes_codes(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = ViewDetailViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    assert response.data["results"][0]["language_code"] == view_detail.language
+    assert response.data["results"][0]["place_code"] == view_detail.place
 
 
 def test_list_watched_movies(db, user, api_rf):
