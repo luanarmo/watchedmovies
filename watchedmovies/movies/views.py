@@ -143,6 +143,15 @@ class ViewDetailViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, Upda
         view_detail = services.create_view_detail(**serializer.validated_data, profile=request.user.profile)
         return Response(serializers.ListViewDetailSerializer(view_detail).data, status=status.HTTP_201_CREATED)
 
+    def update(self, request, *args, **kwargs):
+        """Update a ViewDetail"""
+        partial = kwargs.pop("partial", False)
+        view_detail = self.get_object()
+        serializer = self.get_serializer(view_detail, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        view_detail = services.update_view_detail(view_detail=view_detail, **serializer.validated_data)
+        return Response(serializers.ListViewDetailSerializer(view_detail).data, status=status.HTTP_200_OK)
+
     def destroy(self, request, *args, **kwargs):
         """Delete a ViewDetail"""
         view = self.get_object()

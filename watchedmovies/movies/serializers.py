@@ -135,6 +135,9 @@ class CreateViewDetailSerializer(serializers.ModelSerializer):
 
 
 class UpdateViewDetailSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(min_value=1, max_value=10, required=False, allow_null=True)
+    watched_date = serializers.DateField(required=False, allow_null=True)
+
     class Meta:
         model = ViewDetails
         exclude = ["watched_movie", "profile"]
@@ -142,7 +145,9 @@ class UpdateViewDetailSerializer(serializers.ModelSerializer):
 
 class ListViewDetailSerializer(serializers.ModelSerializer):
     language = serializers.CharField(source="get_language_display")
+    language_code = serializers.CharField(source="language", read_only=True)
     place = serializers.CharField(source="get_place_display")
+    place_code = serializers.CharField(source="place", read_only=True)
     watched_at = serializers.DateTimeField(format="%Y-%m")
     watched_date = serializers.DateField(format="%Y-%m-%d")
 
