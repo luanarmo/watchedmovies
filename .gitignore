@@ -281,3 +281,4 @@ watchedmovies/media/
 
 # Dependabot auto-review loop state (local log only; real state lives in GitHub labels)
 .claude/loop-state/
+.claude/skills/
