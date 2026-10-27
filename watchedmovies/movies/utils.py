@@ -89,7 +89,7 @@ class TextLine:
 class RenderStrategy(Protocol):
     """Interfaz para las estrategias de renderizado."""
 
-    def render(self, canvas: "Canvas", lines: list[TextLine]) -> int:
+    def render(self, canvas: Canvas, lines: list[TextLine]) -> int:
         """Renderiza el texto en el canvas."""
         pass
 
@@ -97,7 +97,7 @@ class RenderStrategy(Protocol):
 class OneColumnRenderStrategy(RenderStrategy):
     """Estrategia de renderizado en una columna."""
 
-    def render(self, canvas: "Canvas", lines: list[TextLine]) -> None:
+    def render(self, canvas: Canvas, lines: list[TextLine]) -> None:
         for line in lines:
             text_bbox = canvas.draw.textbbox((0, 0), line.text, font=line.font)
             text_height = text_bbox[3] - text_bbox[1]
@@ -113,7 +113,7 @@ class OneColumnRenderStrategy(RenderStrategy):
 class TwoColumnRenderStrategy(RenderStrategy):
     """Estrategia de renderizado en dos columnas."""
 
-    def render(self, canvas: "Canvas", lines: list[TextLine]) -> None:
+    def render(self, canvas: Canvas, lines: list[TextLine]) -> None:
         odd_lines = lines[::2]
         even_lines = lines[1::2]
 
