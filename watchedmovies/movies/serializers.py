@@ -58,6 +58,7 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
     total_views = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
+    tier = serializers.SerializerMethodField()
 
     def get_poster_url(self, obj) -> str | None:
         if obj.poster_path == "" or obj.poster_path is None:
@@ -80,6 +81,9 @@ class WatchedMovieSerializer(serializers.ModelSerializer):
 
     def get_is_favorite(self, obj) -> bool:
         return getattr(obj, "is_favorite", False) or False
+
+    def get_tier(self, obj) -> int | None:
+        return getattr(obj, "tier", None)
 
     class Meta:
         model = WatchedMovie
@@ -126,6 +130,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
 class CreateViewDetailSerializer(serializers.ModelSerializer):
     watched_movie = WatchedMovieSerializer(required=True)
     rating = serializers.IntegerField(min_value=1, max_value=10, required=False)
+    tier = serializers.IntegerField(min_value=1, max_value=5, required=False, allow_null=True)
     comment = serializers.CharField(required=False, allow_blank=True)
     watched_date = serializers.DateTimeField(format="%Y-%m-%d", required=False)
 
@@ -136,6 +141,7 @@ class CreateViewDetailSerializer(serializers.ModelSerializer):
 
 class UpdateViewDetailSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(min_value=1, max_value=10, required=False, allow_null=True)
+    tier = serializers.IntegerField(min_value=1, max_value=5, required=False, allow_null=True)
     watched_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:

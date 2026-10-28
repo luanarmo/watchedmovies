@@ -74,6 +74,22 @@ class ViewDetails(models.Model):
         return f"{self.profile.user.name} watched {self.watched_movie.title}"
 
 
+class MovieTier(models.Model):
+    """Model that represents the tier a profile gives to a movie, shared by all its views."""
+
+    movie = models.ForeignKey(WatchedMovie, on_delete=models.CASCADE, related_name="tiers")
+    profile = models.ForeignKey("users.Profile", on_delete=models.CASCADE, related_name="movie_tiers")
+    tier = models.PositiveSmallIntegerField()
+
+    class Meta:
+        verbose_name = "Movie Tier"
+        verbose_name_plural = "Movie Tiers"
+        unique_together = ["movie", "profile"]
+
+    def __str__(self):
+        return f"{self.profile.user.name} gave {self.movie.title} tier {self.tier}"
+
+
 class PlanToWatch(models.Model):
     """Model that represents a movie that the user plans to watch."""
 

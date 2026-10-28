@@ -10,8 +10,11 @@ from rest_framework.exceptions import ValidationError
 from watchedmovies.services import tmdb_api
 from watchedmovies.users.models import Profile
 
-from .models import PlanToWatch, ViewDetails, WatchedMovie
+from .models import MovieTier, PlanToWatch, ViewDetails, WatchedMovie
 from .utils import create_wrapped_poster, generate_collage
+
+# Distinguishes "tier not sent" (leave it as is) from "tier sent as None" (clear it)
+UNSET = object()
 
 
 @transaction.atomic
@@ -25,6 +28,7 @@ def create_view_detail(
     place: str = "",
     watched_date: date,
     is_favorite: bool = False,
+    tier: int | None = UNSET,
 ) -> ViewDetails:
     """Create a new view detail with the given data and remove the movie from the plan to watch list if it exists."""
     watched_movie = get_or_create_watched_movie(watched_movie=watched_movie)
@@ -41,17 +45,32 @@ def create_view_detail(
     )
     view_detail.full_clean()
     view_detail.save()
+    set_movie_tier(movie=watched_movie, profile=profile, tier=tier)
     return view_detail
 
 
 @transaction.atomic
 def update_view_detail(*, view_detail: ViewDetails, **data) -> ViewDetails:
     """Update the given view detail with the given data."""
+    tier = data.pop("tier", UNSET)
     for field, value in data.items():
         setattr(view_detail, field, value)
     view_detail.full_clean()
     view_detail.save()
+    set_movie_tier(movie=view_detail.watched_movie, profile=view_detail.profile, tier=tier)
     return view_detail
+
+
+def set_movie_tier(*, movie: WatchedMovie, profile: any, tier: int | None) -> None:
+    """Set the profile's tier for the given movie, clear it when tier is None, or leave it as is when UNSET."""
+    if tier is UNSET:
+        return
+
+    if tier is None:
+        MovieTier.objects.filter(movie=movie, profile=profile).delete()
+        return
+
+    MovieTier.objects.update_or_create(movie=movie, profile=profile, defaults={"tier": tier})
 
 
 def delete_from_plan_to_watch(*, movie_id: int, profile: any) -> None:

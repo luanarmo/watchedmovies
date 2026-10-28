@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, Exists, Max, OuterRef, Q
+from django.db.models import Avg, Count, Exists, Max, OuterRef, Q, Subquery
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiTypes
@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.viewsets import GenericViewSet
 
-from watchedmovies.movies.models import PlanToWatch, ViewDetails, WatchedMovie
+from watchedmovies.movies.models import MovieTier, PlanToWatch, ViewDetails, WatchedMovie
 
 from ..pagination import CustomPagination
 from ..services import tmdb_api
@@ -53,6 +53,7 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
                     is_favorite=True,
                 )
             ),
+            tier=Subquery(MovieTier.objects.filter(movie=OuterRef("pk"), profile=profile).values("tier")[:1]),
         )
 
     def list(self, request, *args, **kwargs):
@@ -180,12 +181,18 @@ class TMDBViewSet(GenericViewSet):
         data = dict(serialized.data)
         data["is_watched"] = False
         data["is_plan_to_watch"] = False
+        data["tier"] = None
 
         if request.user.is_authenticated:
             profile = request.user.profile
             movie_id_int = int(movie_id)
             data["is_watched"] = WatchedMovie.objects.filter(id=movie_id_int, view_details__profile=profile).exists()
             data["is_plan_to_watch"] = PlanToWatch.objects.filter(movie__id=movie_id_int, profile=profile).exists()
+            data["tier"] = (
+                MovieTier.objects.filter(movie__id=movie_id_int, profile=profile)
+                .values_list("tier", flat=True)
+                .first()
+            )
 
         return Response(data, status=status.HTTP_200_OK)
 
