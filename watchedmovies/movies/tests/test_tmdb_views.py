@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser
 
-from watchedmovies.movies.models import PlanToWatch
+from watchedmovies.movies.models import MovieTier, PlanToWatch
 from watchedmovies.users.tests.factories import ProfileFactory
 
 from ..views import TMDBViewSet
@@ -94,3 +94,19 @@ def test_movie_details_both_flags_true(mock_get, db, user, api_rf):
     assert response.status_code == 200
     assert response.data["is_watched"] is True
     assert response.data["is_plan_to_watch"] is True
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details")
+def test_movie_details_includes_tier_when_authenticated(mock_get, db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    watched_movie = WatchedMovieFactory()
+    ViewDetailFactory(profile=profile, watched_movie=watched_movie)
+    MovieTier.objects.create(profile=profile, movie=watched_movie, tier=3)
+    mock_get.return_value = {**FAKE_TMDB_DATA, "id": watched_movie.id}
+
+    request = api_rf.get(FAKE_URL)
+    request.user = user
+    response = TMDBViewSet.as_view({"get": "movie_details"})(request, movie_id=str(watched_movie.id))
+
+    assert response.status_code == 200
+    assert response.data["tier"] == 3

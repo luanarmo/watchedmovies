@@ -72,6 +72,30 @@ def test_register_view_detail_saves_tier(db, user, api_rf):
     assert MovieTier.objects.get(profile=profile, movie_id=1).tier == 5
 
 
+# One request per test: DRF marks the test transaction for rollback on a 4xx under ATOMIC_REQUESTS.
+@pytest.mark.parametrize("tier", [0, 6])
+def test_register_view_detail_rejects_out_of_range_tier(db, user, api_rf, tier):
+    ProfileFactory(user=user)
+    movie_data = {
+        "id": 1,
+        "original_language": "en",
+        "original_title": "Fake Original Title",
+        "popularity": 9.99,
+        "release_date": "2021-01-01",
+        "title": "Fake Title",
+        "vote_average": 9.99,
+        "vote_count": 100,
+    }
+
+    data = {"watched_movie": movie_data, "watched_date": "2024-11-05", "tier": tier}
+
+    request = api_rf.post(FAKE, data, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"post": "create"})(request)
+
+    assert response.status_code == 400
+
+
 def test_register_view_detail_with_null_tier_clears_tier(db, user, api_rf):
     profile = ProfileFactory(user=user)
     movie = WatchedMovieFactory(original_title="Fake Original Title", title="Fake Title", release_date="2021-01-01")
@@ -247,6 +271,18 @@ def test_update_view_detail_rejects_out_of_range_rating(db, user, api_rf, rating
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize("tier", [0, 6])
+def test_update_view_detail_rejects_out_of_range_tier(db, user, api_rf, tier):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    request = api_rf.patch(FAKE, {"tier": tier}, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
+
+    assert response.status_code == 400
+
+
 def test_update_view_detail_clears_rating(db, user, api_rf):
     profile = ProfileFactory(user=user)
     view_detail = ViewDetailFactory(profile=profile, rating=5)
@@ -353,6 +389,34 @@ def test_retrieve_watched_movie(db, user, api_rf):
     assert response.status_code == 200
     assert response.data["title"] == watched_movie.title
     assert response.data["original_title"] == watched_movie.original_title
+
+
+def test_retrieve_watched_movie_includes_tier(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    watched_movie = WatchedMovieFactory()
+    ViewDetailFactory(profile=profile, watched_movie=watched_movie)
+    MovieTier.objects.create(profile=profile, movie=watched_movie, tier=4)
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "retrieve"})(request, pk=watched_movie.id)
+
+    assert response.status_code == 200
+    assert response.data["tier"] == 4
+
+
+def test_retrieve_watched_movie_ignores_other_profile_tier(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    watched_movie = WatchedMovieFactory()
+    ViewDetailFactory(profile=profile, watched_movie=watched_movie)
+    MovieTier.objects.create(profile=ProfileFactory(), movie=watched_movie, tier=5)
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "retrieve"})(request, pk=watched_movie.id)
+
+    assert response.status_code == 200
+    assert response.data["tier"] is None
 
 
 def test_destroy_watched_movie(db, user, api_rf):
