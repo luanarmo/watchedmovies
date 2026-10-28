@@ -126,6 +126,7 @@ class ListTMDBMovieSerializer(serializers.Serializer):
 class CreateViewDetailSerializer(serializers.ModelSerializer):
     watched_movie = WatchedMovieSerializer(required=True)
     rating = serializers.IntegerField(min_value=1, max_value=10, required=False)
+    tier = serializers.IntegerField(required=False, allow_null=True)
     comment = serializers.CharField(required=False, allow_blank=True)
     watched_date = serializers.DateTimeField(format="%Y-%m-%d", required=False)
 
@@ -136,6 +137,7 @@ class CreateViewDetailSerializer(serializers.ModelSerializer):
 
 class UpdateViewDetailSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(min_value=1, max_value=10, required=False, allow_null=True)
+    tier = serializers.IntegerField(required=False, allow_null=True)
     watched_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
