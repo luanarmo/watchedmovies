@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 from config.settings.base import env
@@ -34,7 +32,7 @@ def get_popular_movies():
     response = make_request(url)
 
     if response.status_code != 200:
-        return json.dumps([])
+        return {"results": []}
 
     return response.json()
 

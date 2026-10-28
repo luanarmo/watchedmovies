@@ -110,3 +110,15 @@ def test_movie_details_includes_tier_when_authenticated(mock_get, db, user, api_
 
     assert response.status_code == 200
     assert response.data["tier"] == 3
+
+
+@patch("watchedmovies.services.tmdb_api.make_request")
+def test_popular_movies_returns_empty_list_when_tmdb_fails(mock_request, db, api_rf):
+    mock_request.return_value.status_code = 401
+
+    request = api_rf.get(FAKE_URL)
+    request.user = AnonymousUser()
+    response = TMDBViewSet.as_view({"get": "popular_movies"})(request)
+
+    assert response.status_code == 200
+    assert response.data == []
