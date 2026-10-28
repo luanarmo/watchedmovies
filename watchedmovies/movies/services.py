@@ -45,10 +45,7 @@ def create_view_detail(
     )
     view_detail.full_clean()
     view_detail.save()
-    if tier is None:
-        MovieTier.objects.filter(movie=watched_movie, profile=profile).delete()
-    elif tier is not UNSET:
-        MovieTier.objects.update_or_create(movie=watched_movie, profile=profile, defaults={"tier": tier})
+    set_movie_tier(movie=watched_movie, profile=profile, tier=tier)
     return view_detail
 
 
@@ -60,13 +57,20 @@ def update_view_detail(*, view_detail: ViewDetails, **data) -> ViewDetails:
         setattr(view_detail, field, value)
     view_detail.full_clean()
     view_detail.save()
-    if tier is None:
-        MovieTier.objects.filter(movie=view_detail.watched_movie, profile=view_detail.profile).delete()
-    elif tier is not UNSET:
-        MovieTier.objects.update_or_create(
-            movie=view_detail.watched_movie, profile=view_detail.profile, defaults={"tier": tier}
-        )
+    set_movie_tier(movie=view_detail.watched_movie, profile=view_detail.profile, tier=tier)
     return view_detail
+
+
+def set_movie_tier(*, movie: WatchedMovie, profile: any, tier: int | None) -> None:
+    """Set the profile's tier for the given movie, clear it when tier is None, or leave it as is when UNSET."""
+    if tier is UNSET:
+        return
+
+    if tier is None:
+        MovieTier.objects.filter(movie=movie, profile=profile).delete()
+        return
+
+    MovieTier.objects.update_or_create(movie=movie, profile=profile, defaults={"tier": tier})
 
 
 def delete_from_plan_to_watch(*, movie_id: int, profile: any) -> None:
