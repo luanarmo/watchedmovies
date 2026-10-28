@@ -118,9 +118,9 @@ def get_or_create_watched_movie(*, watched_movie: dict) -> WatchedMovie:
     title = watched_movie.get("title")
     release_date = watched_movie.get("release_date")
 
-    movie_exists = None
+    movie_exists = WatchedMovie.objects.filter(id=watched_movie.get("id")).first()
 
-    if original_title:
+    if not movie_exists and original_title:
         movie_exists = WatchedMovie.objects.filter(original_title=original_title, release_date=release_date).first()
 
     if not movie_exists and title:

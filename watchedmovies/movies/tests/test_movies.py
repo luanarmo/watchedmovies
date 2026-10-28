@@ -681,6 +681,24 @@ def test_get_or_create_creates_new_when_no_match(mock_details, db):
 
 
 @patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
+def test_register_view_detail_when_tmdb_changed_release_date(mock_details, db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
+    data = {
+        "watched_movie": {**BASE_MOVIE_DATA, "release_date": "2022-06-16"},
+        "watched_date": "2024-11-05",
+    }
+
+    request = api_rf.post(FAKE, data, format="json")
+    request.user = user
+    response = ViewDetailViewSet.as_view({"post": "create"})(request)
+
+    assert response.status_code == 201
+    assert WatchedMovie.objects.count() == 1
+    assert ViewDetails.objects.filter(profile=profile, watched_movie_id=BASE_MOVIE_DATA["id"]).exists()
+
+
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details", return_value=None)
 def test_get_or_create_no_duplicate_when_second_call_has_only_title(mock_details, db):
     get_or_create_watched_movie(watched_movie=BASE_MOVIE_DATA)
     data_title_only = {**BASE_MOVIE_DATA, "original_title": None}
