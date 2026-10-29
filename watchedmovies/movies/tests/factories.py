@@ -29,7 +29,6 @@ class WatchedMovieFactory(DjangoModelFactory):
 class ViewDetailFactory(DjangoModelFactory):
     watched_movie = factory.SubFactory(WatchedMovieFactory)
     profile = factory.SubFactory(ProfileFactory)
-    rating = Faker("pyint", min_value=1, max_value=5)
     comment = Faker("text")
     language = Faker("random_element", elements=[lang[0] for lang in ViewDetails.LANGUAGE_CHOICES])
     place = Faker("random_element", elements=[place[0] for place in ViewDetails.PLACE_CHOICES])

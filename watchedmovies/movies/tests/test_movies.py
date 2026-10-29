@@ -33,7 +33,6 @@ def test_register_view_detail(db, user, api_rf):
 
     data = {
         "watched_movie": movie_data,
-        "rating": 5,
         "comment": "Fake comment",
         "language": "en",
         "place": "home",
@@ -45,7 +44,7 @@ def test_register_view_detail(db, user, api_rf):
     response = ViewDetailViewSet.as_view({"post": "create"})(request)
 
     assert response.status_code == 201
-    assert response.data["rating"] == 5
+    assert "rating" not in response.data
     assert response.data["comment"] == "Fake comment"
 
 
@@ -156,7 +155,7 @@ def test_list_view_details(db, user, api_rf):
 
     assert response.status_code == 200
     assert response.data["count"] == 1
-    assert response.data["results"][0]["rating"] == view_detail.rating
+    assert "rating" not in response.data["results"][0]
     assert response.data["results"][0]["comment"] == view_detail.comment
 
 
@@ -169,7 +168,7 @@ def test_retrieve_view_detail(db, user, api_rf):
     response = ViewDetailViewSet.as_view({"get": "retrieve"})(request, pk=view_detail.id)
 
     assert response.status_code == 200
-    assert response.data["rating"] == view_detail.rating
+    assert "rating" not in response.data
     assert response.data["comment"] == view_detail.comment
 
 
@@ -177,14 +176,13 @@ def test_update_view_detail(db, user, api_rf):
     profile = ProfileFactory(user=user)
     view_detail = ViewDetailFactory(profile=profile)
 
-    data = {"rating": 4, "comment": "Updated comment"}
+    data = {"comment": "Updated comment"}
 
     request = api_rf.patch(FAKE, data, format="json")
     request.user = user
     response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
 
     assert response.status_code == 200
-    assert response.data["rating"] == 4
     assert response.data["comment"] == "Updated comment"
 
 
@@ -259,18 +257,6 @@ def test_update_view_detail_returns_labels_and_codes(db, user, api_rf):
 
 
 # One request per test: DRF marks the test transaction for rollback on a 4xx under ATOMIC_REQUESTS.
-@pytest.mark.parametrize("rating", [0, 11])
-def test_update_view_detail_rejects_out_of_range_rating(db, user, api_rf, rating):
-    profile = ProfileFactory(user=user)
-    view_detail = ViewDetailFactory(profile=profile)
-
-    request = api_rf.patch(FAKE, {"rating": rating}, format="json")
-    request.user = user
-    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
-
-    assert response.status_code == 400
-
-
 @pytest.mark.parametrize("tier", [0, 6])
 def test_update_view_detail_rejects_out_of_range_tier(db, user, api_rf, tier):
     profile = ProfileFactory(user=user)
@@ -283,25 +269,11 @@ def test_update_view_detail_rejects_out_of_range_tier(db, user, api_rf, tier):
     assert response.status_code == 400
 
 
-def test_update_view_detail_clears_rating(db, user, api_rf):
-    profile = ProfileFactory(user=user)
-    view_detail = ViewDetailFactory(profile=profile, rating=5)
-
-    request = api_rf.patch(FAKE, {"rating": None}, format="json")
-    request.user = user
-    response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=view_detail.id)
-
-    assert response.status_code == 200
-    assert response.data["rating"] is None
-    view_detail.refresh_from_db()
-    assert view_detail.rating is None
-
-
 def test_update_view_detail_of_other_profile_returns_404(db, user, api_rf):
     ProfileFactory(user=user)
     other_view_detail = ViewDetailFactory(profile=ProfileFactory())
 
-    request = api_rf.patch(FAKE, {"rating": 3}, format="json")
+    request = api_rf.patch(FAKE, {"comment": "Not mine"}, format="json")
     request.user = user
     response = ViewDetailViewSet.as_view({"patch": "partial_update"})(request, pk=other_view_detail.id)
 
@@ -313,7 +285,6 @@ def test_full_update_view_detail(db, user, api_rf):
     view_detail = ViewDetailFactory(profile=profile)
 
     data = {
-        "rating": 7,
         "comment": "Full update",
         "language": "fr",
         "place": "home",
@@ -326,7 +297,6 @@ def test_full_update_view_detail(db, user, api_rf):
     response = ViewDetailViewSet.as_view({"put": "update"})(request, pk=view_detail.id)
 
     assert response.status_code == 200
-    assert response.data["rating"] == 7
     assert response.data["watched_date"] == "2025-03-10"
     assert response.data["is_favorite"] is True
 
@@ -454,7 +424,6 @@ def test_get_or_create_watched_movie(db, user, api_rf):
 
     data = {
         "watched_movie": movie_data,
-        "rating": 5,
         "comment": "Fake comment",
         "language": "en",
         "place": "home",
@@ -500,7 +469,6 @@ def test_watched_movie_total_views_after_watching_twice(db, user, api_rf):
 
     data = {
         "watched_movie": movie_data,
-        "rating": 5,
         "comment": "Fake comment",
         "language": "en",
         "place": "home",
@@ -546,24 +514,6 @@ def test_list_watched_movies_filter_by_year_counts_only_that_year_views(db, user
     assert response.data["count"] == 1
     assert response.data["results"][0]["id"] == watched_movie.id
     assert response.data["results"][0]["total_views"] == 2
-
-
-def test_list_watched_movies_filter_by_year_averages_only_that_year_ratings(db, user, api_rf):
-    profile = ProfileFactory(user=user)
-    other_profile = ProfileFactory()
-    watched_movie = WatchedMovieFactory()
-
-    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01", rating=4)
-    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-09-25", rating=2)
-    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10", rating=5)
-    ViewDetails.objects.create(profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05", rating=1)
-
-    request = api_rf.get(FAKE, {"watched_date_year": 2026})
-    request.user = user
-    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
-
-    assert response.status_code == 200
-    assert response.data["results"][0]["vote_average"] == 3.0
 
 
 def test_list_watched_movies_filter_by_year_is_favorite_only_from_that_year(db, user, api_rf):
@@ -616,10 +566,10 @@ def test_list_watched_movies_without_year_aggregates_all_years_for_own_profile(d
     other_profile = ProfileFactory()
     watched_movie = WatchedMovieFactory()
 
-    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01", rating=4)
-    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10", rating=2)
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10")
     ViewDetails.objects.create(
-        profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05", rating=1, is_favorite=True
+        profile=other_profile, watched_movie=watched_movie, watched_date="2026-05-05", is_favorite=True
     )
 
     request = api_rf.get(FAKE)
@@ -630,7 +580,7 @@ def test_list_watched_movies_without_year_aggregates_all_years_for_own_profile(d
     assert response.data["count"] == 1
     movie = response.data["results"][0]
     assert movie["total_views"] == 2
-    assert movie["vote_average"] == 3.0
+    assert "vote_average" not in movie
     assert movie["is_favorite"] is False
 
 
@@ -706,3 +656,29 @@ def test_get_or_create_no_duplicate_when_second_call_has_only_title(mock_details
 
     assert WatchedMovie.objects.count() == 1
     assert found.title == BASE_MOVIE_DATA["title"]
+
+
+def test_stats_has_no_rating_data(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    ViewDetailFactory(profile=profile, watched_date="2026-04-01")
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "stats"})(request)
+
+    assert response.status_code == 200
+    assert "average_rating" not in response.data
+    assert "by_rating" not in response.data
+    assert all("avg_rating" not in row for row in response.data["by_year"])
+
+
+def test_retrieve_watched_movie_has_no_average_rating(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    view_detail = ViewDetailFactory(profile=profile)
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "retrieve"})(request, pk=view_detail.watched_movie.id)
+
+    assert response.status_code == 200
+    assert "average_rating" not in response.data

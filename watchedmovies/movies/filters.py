@@ -1,5 +1,5 @@
 import django_filters
-from django.db.models import Avg, Count, Exists, Max, OuterRef, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q
 
 from .models import ViewDetails, WatchedMovie
 
@@ -31,7 +31,6 @@ class WatchedMovieFilter(django_filters.FilterSet):
         return queryset.filter(Exists(year_view_details)).annotate(
             first_watched_date=Max("view_details__watched_date", filter=year_views),
             total_views=Count("view_details", filter=year_views),
-            avg_rating=Avg("view_details__rating", filter=year_views),
             is_favorite=Exists(year_view_details.filter(is_favorite=True)),
         )
 
@@ -44,7 +43,6 @@ class ViewDetailFilter(django_filters.FilterSet):
     class Meta:
         model = ViewDetails
         fields = {
-            "rating": ["exact", "gt", "lt"],
             "language": ["icontains"],
             "place": ["icontains"],
         }

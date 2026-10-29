@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.db.models import Avg, Count, Exists, Max, OuterRef, Q, Subquery
+from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiTypes
@@ -47,7 +47,6 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
         return WatchedMovie.objects.filter(view_details__profile=profile).annotate(
             first_watched_date=Max("view_details__watched_date"),
             total_views=Count("view_details", filter=Q(view_details__profile=profile)),
-            avg_rating=Avg("view_details__rating", filter=Q(view_details__profile=profile)),
             is_favorite=Exists(
                 ViewDetails.objects.filter(
                     watched_movie=OuterRef("pk"),
