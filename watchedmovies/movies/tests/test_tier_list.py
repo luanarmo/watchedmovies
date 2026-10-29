@@ -75,3 +75,23 @@ def test_tier_list_ignores_other_profiles(db, user, api_rf):
     response = get_tier_list(user, api_rf)
 
     assert response.data == []
+
+
+def test_tier_list_returns_movies_watched_in_the_given_year(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    old_movie = WatchedMovieFactory()
+    watch(profile, old_movie, date(2020, 5, 1), tier=2)
+    watch(profile, WatchedMovieFactory(), date(THIS_YEAR, 1, 10), tier=5)
+
+    response = get_tier_list(user, api_rf, {"year": 2020})
+
+    assert response.status_code == 200
+    assert [(m["id"], m["tier"]) for m in response.data] == [(old_movie.id, 2)]
+
+
+def test_tier_list_rejects_an_invalid_year(db, user, api_rf):
+    ProfileFactory(user=user)
+
+    response = get_tier_list(user, api_rf, {"year": "abc"})
+
+    assert response.status_code == 400
