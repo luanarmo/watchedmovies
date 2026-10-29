@@ -98,8 +98,11 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
 
     @action(detail=False, methods=["GET"], url_path="tier-list")
     def tier_list(self, request, *args, **kwargs):
-        """Get the movies watched this year that have a tier, best tier first"""
-        movies = services.get_tier_list(profile=request.user.profile, year=date.today().year)
+        """Get the movies watched in the given year (this year by default) that have a tier, best tier first"""
+        query = serializers.TierListQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        year = query.validated_data.get("year", date.today().year)
+        movies = services.get_tier_list(profile=request.user.profile, year=year)
         return Response(serializers.TierListMovieSerializer(movies, many=True).data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["GET"])

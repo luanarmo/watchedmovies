@@ -24,6 +24,10 @@ class BaseMovieToWatchSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "poster_url"]
 
 
+class TierListQuerySerializer(serializers.Serializer):
+    year = serializers.IntegerField(required=False, min_value=1)
+
+
 class TierListMovieSerializer(BaseMovieToWatchSerializer):
     tier = serializers.IntegerField()
 
