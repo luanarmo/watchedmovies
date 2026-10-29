@@ -682,3 +682,19 @@ def test_retrieve_watched_movie_has_no_average_rating(db, user, api_rf):
 
     assert response.status_code == 200
     assert "average_rating" not in response.data
+
+
+def test_years_ignores_views_without_watched_date(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    watched_movie = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2026-04-01")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date="2025-01-10")
+    ViewDetails.objects.create(profile=profile, watched_movie=watched_movie, watched_date=None)
+
+    request = api_rf.get(FAKE)
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "years"})(request)
+
+    assert response.status_code == 200
+    assert response.data == {"years": [2026, 2025]}
