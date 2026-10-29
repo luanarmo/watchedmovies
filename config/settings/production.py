@@ -108,6 +108,12 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
+        # Unhandled exceptions (500s) with traceback; disable_existing_loggers silences it otherwise
+        "django.request": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": False,
+        },
         # Errors logged by the SDK itself
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
