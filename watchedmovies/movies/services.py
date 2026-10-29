@@ -168,7 +168,7 @@ def get_tier_list(*, profile: Profile, year: int):
 def get_watched_register_years(*, profile: Profile) -> dict:
     """Get the years in which the user registered watched movies."""
     years = (
-        ViewDetails.objects.filter(profile=profile)
+        ViewDetails.objects.filter(profile=profile, watched_date__isnull=False)
         .order_by("-watched_date")
         .values_list("watched_date__year", flat=True)
     )
