@@ -3,7 +3,7 @@ import math
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Avg, Count, Exists, F, OuterRef, Sum
+from django.db.models import Count, Exists, F, OuterRef, Sum
 from django.db.models.functions import ExtractMonth, ExtractWeekDay, ExtractYear
 from rest_framework.exceptions import ValidationError
 
@@ -22,7 +22,6 @@ def create_view_detail(
     *,
     watched_movie: dict,
     profile: any,
-    rating: int = None,
     comment: str = "",
     language: str = "",
     place: str = "",
@@ -36,7 +35,6 @@ def create_view_detail(
     view_detail = ViewDetails(
         watched_movie=watched_movie,
         profile=profile,
-        rating=rating,
         comment=comment,
         language=language,
         place=place,
@@ -277,9 +275,6 @@ def get_stats(*, profile: Profile, year: int = None) -> dict:
     rewatch_count = total_watched - total_unique_movies
     total_runtime_minutes = base_qs.aggregate(total=Sum("watched_movie__runtime"))["total"] or 0
 
-    avg_raw = base_qs.aggregate(avg=Avg("rating"))["avg"]
-    average_rating = round(float(avg_raw), 1) if avg_raw else None
-
     # Top 5 most-rewatched movies
     favorite_movie_qs = base_qs.values("watched_movie__title").annotate(count=Count("id")).order_by("-count")[:5]
     favorite_movie = [{"title": m["watched_movie__title"], "count": m["count"]} for m in favorite_movie_qs]
@@ -312,14 +307,6 @@ def get_stats(*, profile: Profile, year: int = None) -> dict:
         if row["place"]
     ]
 
-    # By rating — always 1-10, fill missing with 0
-    rating_counts = {
-        row["rating"]: row["count"]
-        for row in base_qs.values("rating").annotate(count=Count("id"))
-        if row["rating"] is not None
-    }
-    by_rating = [{"rating": r, "count": rating_counts.get(r, 0)} for r in range(1, 11)]
-
     # By month — always 12 entries
     month_counts = {
         row["month"]: row["count"]
@@ -345,17 +332,13 @@ def get_stats(*, profile: Profile, year: int = None) -> dict:
     }
     by_day_of_week = [{"day": dow_names[d], "day_number": d, "count": dow_counts.get(d, 0)} for d in range(1, 8)]
 
-    # By year — all-time, no year filter, includes avg_rating
+    # By year — all-time, no year filter
     by_year = [
-        {
-            "year": row["year"],
-            "count": row["count"],
-            "avg_rating": round(float(row["avg_rating"]), 1) if row["avg_rating"] else None,
-        }
+        {"year": row["year"], "count": row["count"]}
         for row in all_qs.filter(watched_date__isnull=False)
         .annotate(year=ExtractYear("watched_date"))
         .values("year")
-        .annotate(count=Count("id"), avg_rating=Avg("rating"))
+        .annotate(count=Count("id"))
         .order_by("year")
     ]
 
@@ -393,7 +376,6 @@ def get_stats(*, profile: Profile, year: int = None) -> dict:
         "total_unique_movies": total_unique_movies,
         "rewatch_count": rewatch_count,
         "total_runtime_minutes": total_runtime_minutes,
-        "average_rating": average_rating,
         "favorite_movie": favorite_movie,
         "favorite_genre": favorite_genre,
         "most_active_month": most_active_month,
@@ -405,7 +387,6 @@ def get_stats(*, profile: Profile, year: int = None) -> dict:
         "genres": genres_list,
         "by_language": by_language,
         "by_place": by_place,
-        "by_rating": by_rating,
         "by_month": by_month,
         "by_day_of_week": by_day_of_week,
         "by_year": by_year,
