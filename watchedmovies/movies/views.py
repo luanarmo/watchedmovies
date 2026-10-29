@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models import Avg, Count, Exists, Max, OuterRef, Q, Subquery
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -94,6 +96,12 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
         profile = request.user.profile
         years = services.get_watched_register_years(profile=profile)
         return Response(years, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["GET"], url_path="tier-list")
+    def tier_list(self, request, *args, **kwargs):
+        """Get the movies watched this year that have a tier, best tier first"""
+        movies = services.get_tier_list(profile=request.user.profile, year=date.today().year)
+        return Response(serializers.TierListMovieSerializer(movies, many=True).data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["GET"])
     def wrapped(self, request, *args, **kwargs):

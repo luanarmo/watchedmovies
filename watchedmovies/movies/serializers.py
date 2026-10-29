@@ -24,6 +24,13 @@ class BaseMovieToWatchSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "poster_url"]
 
 
+class TierListMovieSerializer(BaseMovieToWatchSerializer):
+    tier = serializers.IntegerField()
+
+    class Meta(BaseMovieToWatchSerializer.Meta):
+        fields = ["id", "title", "poster_url", "tier"]
+
+
 class ListWatchedMovieSerializer(serializers.ModelSerializer):
     total_views = serializers.SerializerMethodField()
     vote_average = serializers.SerializerMethodField()

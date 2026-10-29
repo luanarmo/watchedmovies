@@ -3,7 +3,7 @@ import math
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Exists, F, OuterRef, Sum
 from django.db.models.functions import ExtractMonth, ExtractWeekDay, ExtractYear
 from rest_framework.exceptions import ValidationError
 
@@ -155,6 +155,16 @@ def create_collage(
     watched_movies = queryset.values_list("poster_path", flat=True)
 
     return generate_collage(poster_urls=watched_movies)
+
+
+def get_tier_list(*, profile: Profile, year: int):
+    """Get the movies the profile watched in the given year that have a tier, best tier first."""
+    year_views = ViewDetails.objects.filter(watched_movie=OuterRef("pk"), profile=profile, watched_date__year=year)
+    return (
+        WatchedMovie.objects.filter(Exists(year_views), tiers__profile=profile)
+        .annotate(tier=F("tiers__tier"))
+        .order_by("-tier", "title")
+    )
 
 
 def get_watched_register_years(*, profile: Profile) -> dict:
