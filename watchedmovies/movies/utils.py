@@ -1,5 +1,7 @@
+import io
 import math
 import tempfile
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import BinaryIO, Protocol
 
@@ -9,6 +11,15 @@ from PIL import Image, ImageDraw, ImageFont
 from config.settings.base import env
 
 from . import ImageSizes
+
+POSTER_REQUEST_TIMEOUT = 10  # seconds, so a stalled poster download can't hang the request
+TIER_LETTERS = "SABCD"  # best tier first: tier 5 is S, tier 1 is D
+TIER_COUNT = len(TIER_LETTERS)
+TIER_ROW_COLOR = (31, 24, 38)
+TIER_LETTER_COLOR = (120, 84, 140)
+TIER_LETTER_WIDTH = 100
+TIER_POSTER_WIDTH = 100
+TIER_POSTER_HEIGHT = 150
 
 
 def get_poster_path(image_path: str, size: str = "w342") -> str:
@@ -58,10 +69,42 @@ def generate_collage(*, poster_urls: list) -> BinaryIO:
     return temp_path.read()
 
 
+def generate_tier_list_image(*, movies: list[tuple[int, str]]) -> bytes:
+    """Generate a PNG with one row per tier (best first) and the poster of each movie in the row of its tier.
+
+    `movies` is a list of (tier, poster_path); the posters of a row keep the order of the list."""
+    with ThreadPoolExecutor() as executor:
+        posters = list(executor.map(open_image_generator, [poster_path for _, poster_path in movies]))
+
+    posters_per_tier = Counter(tier for tier, _ in movies)
+    width = TIER_LETTER_WIDTH + max(posters_per_tier.values(), default=1) * TIER_POSTER_WIDTH
+    image = Image.new("RGB", (width, TIER_COUNT * TIER_POSTER_HEIGHT), TIER_ROW_COLOR)
+
+    draw = ImageDraw.Draw(image)
+    font = load_font("watchedmovies/assets/fonts/JetBrains/static/JetBrainsMono-Bold.ttf", 64)
+    for row, letter in enumerate(TIER_LETTERS):
+        top = row * TIER_POSTER_HEIGHT
+        draw.rectangle((0, top, TIER_LETTER_WIDTH - 1, top + TIER_POSTER_HEIGHT - 1), fill=TIER_LETTER_COLOR)
+        draw.text(
+            (TIER_LETTER_WIDTH // 2, top + TIER_POSTER_HEIGHT // 2), letter, font=font, fill="white", anchor="mm"
+        )
+
+    placed = Counter()
+    for (tier, _), poster in zip(movies, posters):
+        x = TIER_LETTER_WIDTH + placed[tier] * TIER_POSTER_WIDTH
+        y = (TIER_COUNT - tier) * TIER_POSTER_HEIGHT
+        image.paste(poster.resize((TIER_POSTER_WIDTH, TIER_POSTER_HEIGHT)), (x, y))
+        placed[tier] += 1
+
+    buffer = io.BytesIO()
+    image.save(buffer, "PNG")
+    return buffer.getvalue()
+
+
 def open_image_generator(image_path: str) -> Image:
     """Open an image from a file path."""
     path = get_poster_path(image_path)
-    response = requests.get(path, stream=True).raw
+    response = requests.get(path, stream=True, timeout=POSTER_REQUEST_TIMEOUT).raw
     return Image.open(response)
 
 

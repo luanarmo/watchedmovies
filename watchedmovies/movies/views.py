@@ -96,15 +96,27 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
         years = services.get_watched_register_years(profile=profile)
         return Response(years, status=status.HTTP_200_OK)
 
+    @staticmethod
+    def _get_tier_list_year(request):
+        """Year of the tier list: this year by default, None (every year) with ?year=all."""
+        query = serializers.TierListQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        return query.validated_data.get("year", date.today().year)
+
     @action(detail=False, methods=["GET"], url_path="tier-list")
     def tier_list(self, request, *args, **kwargs):
         """Get the movies watched in the given year (this year by default, any year with ?year=all)
         that have a tier, best tier first"""
-        query = serializers.TierListQuerySerializer(data=request.query_params)
-        query.is_valid(raise_exception=True)
-        year = query.validated_data.get("year", date.today().year)
+        year = self._get_tier_list_year(request)
         movies = services.get_tier_list(profile=request.user.profile, year=year)
         return Response(serializers.TierListMovieSerializer(movies, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["GET"], url_path="tier-list-image")
+    def tier_list_image(self, request, *args, **kwargs):
+        """Get the image of the tier list, encoded in base64"""
+        year = self._get_tier_list_year(request)
+        image = services.create_tier_list_image(profile=request.user.profile, year=year)
+        return Response({"image": image}, status=status.HTTP_200_OK)
 
     @extend_schema(request=serializers.SetMovieTierSerializer, responses=serializers.SetMovieTierSerializer)
     @action(detail=True, methods=["PATCH"], url_path="tier")
