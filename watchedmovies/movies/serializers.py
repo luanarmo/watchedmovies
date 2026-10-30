@@ -35,6 +35,10 @@ class TierListMovieSerializer(BaseMovieToWatchSerializer):
         fields = ["id", "title", "poster_url", "tier"]
 
 
+class SetMovieTierSerializer(serializers.Serializer):
+    tier = serializers.IntegerField(min_value=1, max_value=5)
+
+
 class ListWatchedMovieSerializer(serializers.ModelSerializer):
     total_views = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()

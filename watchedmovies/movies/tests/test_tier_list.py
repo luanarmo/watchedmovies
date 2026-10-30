@@ -95,3 +95,68 @@ def test_tier_list_rejects_an_invalid_year(db, user, api_rf):
     response = get_tier_list(user, api_rf, {"year": "abc"})
 
     assert response.status_code == 400
+
+
+def set_tier(user, api_rf, movie_id, data):
+    request = api_rf.patch(FAKE, data, format="json")
+    request.user = user
+    return WatchedMovieViewSet.as_view({"patch": "set_tier"})(request, pk=movie_id)
+
+
+def test_set_tier_changes_the_tier_of_a_watched_movie(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    movie = WatchedMovieFactory()
+    watch(profile, movie, date(THIS_YEAR, 1, 10), tier=4)
+
+    response = set_tier(user, api_rf, movie.id, {"tier": 5})
+
+    assert response.status_code == 200
+    assert response.data == {"tier": 5}
+    assert MovieTier.objects.get(profile=profile, movie=movie).tier == 5
+
+
+def test_set_tier_assigns_a_tier_to_a_movie_without_one(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    movie = WatchedMovieFactory()
+    watch(profile, movie, date(THIS_YEAR, 1, 10))
+
+    response = set_tier(user, api_rf, movie.id, {"tier": 2})
+
+    assert response.status_code == 200
+    assert MovieTier.objects.get(profile=profile, movie=movie).tier == 2
+
+
+def test_set_tier_rejects_a_tier_out_of_range(transactional_db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    movie = WatchedMovieFactory()
+    watch(profile, movie, date(THIS_YEAR, 1, 10), tier=4)
+
+    for invalid_tier in (0, 6):
+        response = set_tier(user, api_rf, movie.id, {"tier": invalid_tier})
+
+        assert response.status_code == 400
+    assert MovieTier.objects.get(profile=profile, movie=movie).tier == 4
+
+
+def test_set_tier_requires_a_tier(transactional_db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    movie = WatchedMovieFactory()
+    watch(profile, movie, date(THIS_YEAR, 1, 10), tier=4)
+
+    for data in ({}, {"tier": None}):
+        response = set_tier(user, api_rf, movie.id, data)
+
+        assert response.status_code == 400
+    assert MovieTier.objects.get(profile=profile, movie=movie).tier == 4
+
+
+def test_set_tier_does_not_touch_movies_the_user_has_not_watched(transactional_db, user, api_rf):
+    ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    movie = WatchedMovieFactory()
+    watch(other_profile, movie, date(THIS_YEAR, 1, 10), tier=3)
+
+    response = set_tier(user, api_rf, movie.id, {"tier": 5})
+
+    assert response.status_code == 404
+    assert MovieTier.objects.get(profile=other_profile, movie=movie).tier == 3
