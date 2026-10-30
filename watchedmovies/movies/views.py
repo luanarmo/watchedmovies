@@ -105,6 +105,16 @@ class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, De
         movies = services.get_tier_list(profile=request.user.profile, year=year)
         return Response(serializers.TierListMovieSerializer(movies, many=True).data, status=status.HTTP_200_OK)
 
+    @extend_schema(request=serializers.SetMovieTierSerializer, responses=serializers.SetMovieTierSerializer)
+    @action(detail=True, methods=["PATCH"], url_path="tier")
+    def set_tier(self, request, *args, **kwargs):
+        """Set the tier the current user gives to a watched movie"""
+        movie = self.get_object()
+        serializer = serializers.SetMovieTierSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        services.set_movie_tier(movie=movie, profile=request.user.profile, tier=serializer.validated_data["tier"])
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=["GET"])
     def wrapped(self, request, *args, **kwargs):
         """Get statistics from watched movies"""
