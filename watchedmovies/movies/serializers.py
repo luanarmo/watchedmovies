@@ -25,7 +25,13 @@ class BaseMovieToWatchSerializer(serializers.ModelSerializer):
 
 
 class TierListQuerySerializer(serializers.Serializer):
-    year = serializers.IntegerField(required=False, min_value=1)
+    year = serializers.CharField(required=False)
+
+    def validate_year(self, value):
+        """Turn "all" into None (every year) and any other value into a year number."""
+        if value == "all":
+            return None
+        return serializers.IntegerField(min_value=1).run_validation(value)
 
 
 class TierListMovieSerializer(BaseMovieToWatchSerializer):

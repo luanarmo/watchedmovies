@@ -89,6 +89,51 @@ def test_tier_list_returns_movies_watched_in_the_given_year(db, user, api_rf):
     assert [(m["id"], m["tier"]) for m in response.data] == [(old_movie.id, 2)]
 
 
+def test_tier_list_returns_movies_with_a_tier_from_all_years_ordered_by_tier(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    c_movie = WatchedMovieFactory(title="C movie")
+    a_movie = WatchedMovieFactory(title="A movie")
+    s_movie = WatchedMovieFactory(title="S movie")
+    other_s_movie = WatchedMovieFactory(title="Another S movie")
+    watch(profile, c_movie, date(2019, 5, 1), tier=2)
+    watch(profile, a_movie, date(2021, 5, 1), tier=4)
+    watch(profile, s_movie, date(THIS_YEAR, 1, 10), tier=5)
+    watch(profile, other_s_movie, date(2020, 8, 1), tier=5)
+
+    response = get_tier_list(user, api_rf, {"year": "all"})
+
+    assert response.status_code == 200
+    assert [(m["id"], m["tier"]) for m in response.data] == [
+        (other_s_movie.id, 5),
+        (s_movie.id, 5),
+        (a_movie.id, 4),
+        (c_movie.id, 2),
+    ]
+
+
+def test_tier_list_from_all_years_hides_movies_without_tier_and_other_profiles_tiers(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    tiered_movie = WatchedMovieFactory()
+    watch(profile, tiered_movie, date(2020, 5, 1), tier=3)
+    watch(profile, WatchedMovieFactory(), date(2021, 5, 1))
+    watch(other_profile, WatchedMovieFactory(), date(2022, 5, 1), tier=5)
+
+    response = get_tier_list(user, api_rf, {"year": "all"})
+
+    assert response.status_code == 200
+    assert [(m["id"], m["tier"]) for m in response.data] == [(tiered_movie.id, 3)]
+
+
+def test_tier_list_from_all_years_is_empty_when_no_movie_has_a_tier(db, user, api_rf):
+    ProfileFactory(user=user)
+
+    response = get_tier_list(user, api_rf, {"year": "all"})
+
+    assert response.status_code == 200
+    assert response.data == []
+
+
 def test_tier_list_rejects_an_invalid_year(db, user, api_rf):
     ProfileFactory(user=user)
 

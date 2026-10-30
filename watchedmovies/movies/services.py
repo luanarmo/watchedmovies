@@ -155,14 +155,13 @@ def create_collage(
     return generate_collage(poster_urls=watched_movies)
 
 
-def get_tier_list(*, profile: Profile, year: int):
-    """Get the movies the profile watched in the given year that have a tier, best tier first."""
-    year_views = ViewDetails.objects.filter(watched_movie=OuterRef("pk"), profile=profile, watched_date__year=year)
-    return (
-        WatchedMovie.objects.filter(Exists(year_views), tiers__profile=profile)
-        .annotate(tier=F("tiers__tier"))
-        .order_by("-tier", "title")
-    )
+def get_tier_list(*, profile: Profile, year: int | None):
+    """Get the movies the profile watched in the given year (any year if None) that have a tier, best tier first."""
+    movies = WatchedMovie.objects.filter(tiers__profile=profile)
+    if year is not None:
+        year_views = ViewDetails.objects.filter(watched_movie=OuterRef("pk"), profile=profile, watched_date__year=year)
+        movies = movies.filter(Exists(year_views))
+    return movies.annotate(tier=F("tiers__tier")).order_by("-tier", "title")
 
 
 def get_watched_register_years(*, profile: Profile) -> dict:
