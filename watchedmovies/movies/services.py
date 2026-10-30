@@ -1,3 +1,4 @@
+import base64
 import calendar as cal
 import math
 from datetime import date, timedelta
@@ -11,7 +12,7 @@ from watchedmovies.services import tmdb_api
 from watchedmovies.users.models import Profile
 
 from .models import MovieTier, PlanToWatch, ViewDetails, WatchedMovie
-from .utils import create_wrapped_poster, generate_collage
+from .utils import create_wrapped_poster, generate_collage, generate_tier_list_image
 
 # Distinguishes "tier not sent" (leave it as is) from "tier sent as None" (clear it)
 UNSET = object()
@@ -153,6 +154,12 @@ def create_collage(
     watched_movies = queryset.values_list("poster_path", flat=True)
 
     return generate_collage(poster_urls=watched_movies)
+
+
+def create_tier_list_image(*, profile: Profile, year: int | None) -> str:
+    """Create the image of the tier list (any year if None), encoded in base64."""
+    movies = get_tier_list(profile=profile, year=year).values_list("tier", "poster_path")
+    return base64.b64encode(generate_tier_list_image(movies=list(movies))).decode()
 
 
 def get_tier_list(*, profile: Profile, year: int | None):
