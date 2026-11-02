@@ -29,6 +29,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "bio", "birth_date")
+    list_select_related = ("user",)
     search_fields = ("bio", "birth_date")
     ordering = ("id",)
     list_filter = ("birth_date",)
