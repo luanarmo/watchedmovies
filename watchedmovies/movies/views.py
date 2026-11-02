@@ -2,11 +2,14 @@ from datetime import date
 
 from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
 from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -208,6 +211,8 @@ class TMDBViewSet(GenericViewSet):
     def movie_details(self, request, movie_id: int = None, *args, **kwargs):
         """Get movie details"""
         movie_details = tmdb_api.get_movie_details(movie_id)
+        if movie_details is None:
+            raise NotFound("Movie details are not available.")
         serialized = serializers.ListTMDBMovieSerializer(data=movie_details)
         serialized.is_valid(raise_exception=True)
 
@@ -229,6 +234,7 @@ class TMDBViewSet(GenericViewSet):
 
         return Response(data, status=status.HTTP_200_OK)
 
+    @method_decorator(cache_control(public=True, max_age=tmdb_api.POPULAR_MOVIES_TTL))
     @action(detail=False, methods=["GET"])
     def popular_movies(self, request, *args, **kwargs):
         """Get popular movies"""
