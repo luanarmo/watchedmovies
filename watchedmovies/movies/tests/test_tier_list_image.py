@@ -26,9 +26,12 @@ BLUE = (0, 0, 255)
 
 class FakeResponse:
     def __init__(self, color):
-        self.raw = io.BytesIO()
-        Image.new("RGB", (500, 750), color).save(self.raw, "PNG")
-        self.raw.seek(0)
+        buffer = io.BytesIO()
+        Image.new("RGB", (500, 750), color).save(buffer, "PNG")
+        self.content = buffer.getvalue()
+
+    def raise_for_status(self):
+        pass
 
 
 @pytest.fixture(autouse=True)

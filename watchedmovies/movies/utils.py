@@ -1,3 +1,4 @@
+import hashlib
 import io
 import math
 import tempfile
@@ -7,6 +8,7 @@ from functools import cache
 from typing import BinaryIO, Protocol
 
 import requests
+from django.core.cache import cache as django_cache
 from PIL import Image, ImageDraw, ImageFont
 
 from config.settings.base import env
@@ -14,6 +16,7 @@ from config.settings.base import env
 from . import ImageSizes
 
 POSTER_REQUEST_TIMEOUT = 10  # seconds, so a stalled poster download can't hang the request
+POSTER_CACHE_TTL = 60 * 60 * 24 * 7  # a poster file is immutable under its path
 TIER_LETTERS = "SABCD"  # best tier first: tier 5 is S, tier 1 is D
 TIER_COUNT = len(TIER_LETTERS)
 TIER_ROW_COLOR = (31, 24, 38)
@@ -108,11 +111,26 @@ def generate_tier_list_image(*, movies: list[tuple[int, str]]) -> bytes:
     return buffer.getvalue()
 
 
+def fetch_poster_bytes(image_path: str) -> bytes:
+    """Download a poster, served from the cache when possible.
+
+    A TMDB poster file never changes under the same path, so it is cached for a long time. Only successful
+    downloads are cached (raise_for_status stops anything else before reaching the cache)."""
+    url = get_poster_path(image_path)
+    cache_key = f"poster:{hashlib.md5(url.encode(), usedforsecurity=False).hexdigest()}"
+
+    content = django_cache.get(cache_key)
+    if content is None:
+        response = requests.get(url, timeout=POSTER_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        content = response.content
+        django_cache.set(cache_key, content, POSTER_CACHE_TTL)
+    return content
+
+
 def open_image_generator(image_path: str) -> Image:
     """Open an image from a file path."""
-    path = get_poster_path(image_path)
-    response = requests.get(path, stream=True, timeout=POSTER_REQUEST_TIMEOUT).raw
-    return Image.open(response)
+    return Image.open(io.BytesIO(fetch_poster_bytes(image_path)))
 
 
 def calculate_dimensions(n: int) -> tuple:

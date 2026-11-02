@@ -11,6 +11,7 @@ from rest_framework.exceptions import ValidationError
 from watchedmovies.services import tmdb_api
 from watchedmovies.users.models import Profile
 
+from . import profile_cache
 from .models import MovieTier, PlanToWatch, ViewDetails, WatchedMovie
 from .utils import create_wrapped_poster, generate_collage, generate_tier_list_image
 
@@ -157,7 +158,16 @@ def create_collage(
 
 
 def create_tier_list_image(*, profile: Profile, year: int | None) -> str:
-    """Create the image of the tier list (any year if None), encoded in base64."""
+    """Create the image of the tier list (any year if None), encoded in base64. Cached per profile."""
+    return profile_cache.get_or_build(
+        profile.id,
+        "tier-list-image",
+        "all" if year is None else year,
+        build=lambda: _build_tier_list_image(profile=profile, year=year),
+    )
+
+
+def _build_tier_list_image(*, profile: Profile, year: int | None) -> str:
     movies = get_tier_list(profile=profile, year=year).values_list("tier", "poster_path")
     return base64.b64encode(generate_tier_list_image(movies=list(movies))).decode()
 
@@ -172,7 +182,13 @@ def get_tier_list(*, profile: Profile, year: int | None):
 
 
 def get_watched_register_years(*, profile: Profile) -> dict:
-    """Get the years in which the user registered watched movies."""
+    """Get the years in which the user registered watched movies. Cached per profile."""
+    return profile_cache.get_or_build(
+        profile.id, "years", build=lambda: _build_watched_register_years(profile=profile)
+    )
+
+
+def _build_watched_register_years(*, profile: Profile) -> dict:
     years = (
         ViewDetails.objects.filter(profile=profile, watched_date__isnull=False)
         .order_by("-watched_date")
@@ -185,10 +201,15 @@ def get_watched_register_years(*, profile: Profile) -> dict:
     return {"years": ordered_years}
 
 
-def create_wrapped(*, profile: Profile, year: int) -> dict:
-    """Get statistics from watched movies."""
+def create_wrapped(*, profile: Profile, year: int) -> bytes:
+    """Create the wrapped poster of the given year (this year by default). Cached per profile."""
+    year = str(year) if year else str(date.today().year)  # resolved before keying: "no year" changes on Jan 1st
+    return profile_cache.get_or_build(
+        profile.id, "wrapped", year, build=lambda: _build_wrapped(profile=profile, year=year)
+    )
 
-    year = year if year else date.today().year
+
+def _build_wrapped(*, profile: Profile, year: int | str) -> bytes:
 
     total_watched_movies = ViewDetails.objects.filter(
         profile=profile,
@@ -266,7 +287,13 @@ def create_wrapped(*, profile: Profile, year: int) -> dict:
 
 
 def get_stats(*, profile: Profile, year: int = None) -> dict:
-    """Return JSON statistics for the user's watched movies."""
+    """Return JSON statistics for the user's watched movies. Cached per profile."""
+    return profile_cache.get_or_build(
+        profile.id, "stats", year or "all", build=lambda: _build_stats(profile=profile, year=year)
+    )
+
+
+def _build_stats(*, profile: Profile, year: int = None) -> dict:
     if year:
         year = int(year)
         base_qs = ViewDetails.objects.filter(profile=profile, watched_date__year=year)
