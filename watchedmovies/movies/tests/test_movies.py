@@ -584,6 +584,32 @@ def test_list_watched_movies_without_year_aggregates_all_years_for_own_profile(d
     assert movie["is_favorite"] is False
 
 
+def test_list_watched_movies_includes_title_last_view_date_and_own_tier(db, user, api_rf):
+    profile = ProfileFactory(user=user)
+    other_profile = ProfileFactory()
+    tiered = WatchedMovieFactory()
+    untiered = WatchedMovieFactory()
+
+    ViewDetails.objects.create(profile=profile, watched_movie=tiered, watched_date="2026-01-10")
+    ViewDetails.objects.create(profile=profile, watched_movie=tiered, watched_date="2026-03-05")
+    ViewDetails.objects.create(profile=profile, watched_movie=untiered, watched_date="2025-06-01")
+    MovieTier.objects.create(profile=profile, movie=tiered, tier=4)
+    MovieTier.objects.create(profile=other_profile, movie=untiered, tier=5)
+
+    request = api_rf.get(FAKE, {"ordering": "-first_watched_date"})
+    request.user = user
+    response = WatchedMovieViewSet.as_view({"get": "list"})(request)
+
+    assert response.status_code == 200
+    first, second = response.data["results"]
+    assert first["title"] == tiered.title
+    assert first["first_watched_date"] == "2026-03-05"
+    assert first["tier"] == 4
+    # the tier of another profile never leaks, and no tier is null
+    assert second["first_watched_date"] == "2025-06-01"
+    assert second["tier"] is None
+
+
 BASE_MOVIE_DATA = {
     "id": 99,
     "adult": False,

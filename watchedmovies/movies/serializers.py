@@ -64,6 +64,9 @@ class SetMovieTierSerializer(serializers.Serializer):
 class ListWatchedMovieSerializer(PosterUrlMixin):
     total_views = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
+    # Annotated by the viewset: the most recent view date (of the filtered year) and the tier of the profile
+    first_watched_date = serializers.DateField(read_only=True, allow_null=True)
+    tier = serializers.IntegerField(read_only=True, allow_null=True)
 
     def get_total_views(self, obj) -> int:
         return getattr(obj, "total_views", 0) or 0
@@ -73,7 +76,7 @@ class ListWatchedMovieSerializer(PosterUrlMixin):
 
     class Meta:
         model = WatchedMovie
-        fields = ["id", "total_views", "poster_url", "is_favorite"]
+        fields = ["id", "title", "total_views", "poster_url", "is_favorite", "first_watched_date", "tier"]
 
 
 class WatchedMovieSerializer(PosterUrlMixin, BackdropUrlMixin):
