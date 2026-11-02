@@ -274,7 +274,7 @@ class PlanToWatchViewSet(GenericViewSet, ListModelMixin, DestroyModelMixin):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return PlanToWatch.objects.none()
-        return PlanToWatch.objects.filter(profile=self.request.user.profile)
+        return PlanToWatch.objects.filter(profile=self.request.user.profile).select_related("movie")
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
