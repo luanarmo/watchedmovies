@@ -12,6 +12,7 @@ argon2-cffi==25.1.0
 # Django REST Framework
 djangorestframework==3.18.3  # https://github.com/encode/django-rest-framework
 django-cors-headers==4.9.0  # https://github.com/adamchainz/django-cors-headers
+django-compression-middleware==0.5.0  # https://github.com/friedelwolff/django-compression-middleware
 djangorestframework-simplejwt==5.5.1 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
 
 # DRF-spectacular for api documentation
