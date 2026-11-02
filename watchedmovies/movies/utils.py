@@ -3,6 +3,7 @@ import math
 import tempfile
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
+from functools import cache
 from typing import BinaryIO, Protocol
 
 import requests
@@ -22,9 +23,15 @@ TIER_POSTER_WIDTH = 100
 TIER_POSTER_HEIGHT = 150
 
 
+@cache
+def get_tmdb_base_url() -> str:
+    """TMDB images base URL. Read once (lazily) instead of parsing the environment for every serialized item."""
+    return env("TMDB_SECURE_BASE_URL")
+
+
 def get_poster_path(image_path: str, size: str = "w342") -> str:
     """Return the full URL of an image from the TMDB API."""
-    base_url = env("TMDB_SECURE_BASE_URL")
+    base_url = get_tmdb_base_url()
     if size not in ImageSizes.POSTER_SIZES:
         raise ValueError(f"Invalid image size: {size}")
     return f"{base_url}{size}{image_path}"
@@ -32,7 +39,7 @@ def get_poster_path(image_path: str, size: str = "w342") -> str:
 
 def get_backdrop_path(image_path: str, size: str = "w780") -> str:
     """Return the full URL of a backdrop image from the TMDB API."""
-    base_url = env("TMDB_SECURE_BASE_URL")
+    base_url = get_tmdb_base_url()
     if size not in ImageSizes.BACKDROP_SIZES:
         raise ValueError(f"Invalid image size: {size}")
     return f"{base_url}{size}{image_path}"

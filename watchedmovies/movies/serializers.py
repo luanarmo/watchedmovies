@@ -10,15 +10,31 @@ class DefaultSerializer(serializers.Serializer):
     pass
 
 
-class BaseMovieToWatchSerializer(serializers.ModelSerializer):
+class PosterUrlMixin(serializers.ModelSerializer):
+    """Adds `poster_url`, built from the `poster_path` of the movie."""
+
     poster_url = serializers.SerializerMethodField()
 
     def get_poster_url(self, obj) -> str | None:
-        if obj.poster_path == "" or obj.poster_path is None:
+        if not obj.poster_path:
             return None
 
         return get_poster_path(obj.poster_path)
 
+
+class BackdropUrlMixin(serializers.ModelSerializer):
+    """Adds `backdrop_url`, built from the `backdrop_path` of the movie."""
+
+    backdrop_url = serializers.SerializerMethodField()
+
+    def get_backdrop_url(self, obj) -> str | None:
+        if not obj.backdrop_path:
+            return None
+
+        return get_backdrop_path(obj.backdrop_path)
+
+
+class BaseMovieToWatchSerializer(PosterUrlMixin):
     class Meta:
         model = WatchedMovie
         fields = ["id", "title", "poster_url"]
@@ -45,19 +61,12 @@ class SetMovieTierSerializer(serializers.Serializer):
     tier = serializers.IntegerField(min_value=1, max_value=5)
 
 
-class ListWatchedMovieSerializer(serializers.ModelSerializer):
+class ListWatchedMovieSerializer(PosterUrlMixin):
     total_views = serializers.SerializerMethodField()
-    poster_url = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
 
     def get_total_views(self, obj) -> int:
         return getattr(obj, "total_views", 0) or 0
-
-    def get_poster_url(self, obj) -> str | None:
-        if obj.poster_path == "" or obj.poster_path is None:
-            return None
-
-        return get_poster_path(obj.poster_path)
 
     def get_is_favorite(self, obj) -> bool:
         return getattr(obj, "is_favorite", False) or False
@@ -67,25 +76,11 @@ class ListWatchedMovieSerializer(serializers.ModelSerializer):
         fields = ["id", "total_views", "poster_url", "is_favorite"]
 
 
-class WatchedMovieSerializer(serializers.ModelSerializer):
+class WatchedMovieSerializer(PosterUrlMixin, BackdropUrlMixin):
     id = serializers.IntegerField()
-    poster_url = serializers.SerializerMethodField()
-    backdrop_url = serializers.SerializerMethodField()
     total_views = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
     tier = serializers.SerializerMethodField()
-
-    def get_poster_url(self, obj) -> str | None:
-        if obj.poster_path == "" or obj.poster_path is None:
-            return None
-
-        return get_poster_path(obj.poster_path)
-
-    def get_backdrop_url(self, obj) -> str | None:
-        if obj.backdrop_path == "" or obj.backdrop_path is None:
-            return None
-
-        return get_backdrop_path(obj.backdrop_path)
 
     def get_total_views(self, obj) -> int:
         return getattr(obj, "total_views", 0) or 0
