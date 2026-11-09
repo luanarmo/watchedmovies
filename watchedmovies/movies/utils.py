@@ -48,6 +48,17 @@ def get_backdrop_path(image_path: str, size: str = "w780") -> str:
     return f"{base_url}{size}{image_path}"
 
 
+def extract_directors(details: dict | None) -> list[str]:
+    """Return the names of the directors in a TMDB movie payload fetched with `append_to_response=credits`.
+
+    Tolerant on purpose: movies stored before credits were requested have no `credits`, and those return []."""
+    if not details:
+        return []
+
+    crew = (details.get("credits") or {}).get("crew") or []
+    return [member["name"] for member in crew if member.get("job") == "Director" and member.get("name")]
+
+
 def generate_collage(*, poster_urls: list) -> BinaryIO:
     """Generate a collage from a list of poster URLs."""
 

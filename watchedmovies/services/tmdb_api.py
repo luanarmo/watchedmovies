@@ -48,9 +48,10 @@ def _fetch_json(url, *, cache_key: str, ttl: int) -> None | dict:
 
 
 def get_movie_details(movie_id) -> None | dict:
-    """Get the details of a movie by its ID."""
-    url = f"{BASE_URL}/movie/{movie_id}?language=en-US"
-    return _fetch_json(url, cache_key=f"tmdb:movie:{movie_id}", ttl=MOVIE_DETAILS_TTL)
+    """Get the details of a movie by its ID, with its credits (cast and crew) appended."""
+    url = f"{BASE_URL}/movie/{movie_id}?language=en-US&append_to_response=credits"
+    # The `v2` suffix drops the entries cached before `credits` was requested, which have no crew
+    return _fetch_json(url, cache_key=f"tmdb:movie:v2:{movie_id}", ttl=MOVIE_DETAILS_TTL)
 
 
 def get_popular_movies():
