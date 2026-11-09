@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from watchedmovies.movies.models import PlanToWatch, ViewDetails, WatchedMovie
-from watchedmovies.movies.utils import get_backdrop_path, get_poster_path
+from watchedmovies.movies.utils import extract_directors, get_backdrop_path, get_poster_path
 
 
 class DefaultSerializer(serializers.Serializer):
@@ -84,6 +84,7 @@ class WatchedMovieSerializer(PosterUrlMixin, BackdropUrlMixin):
     total_views = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
     tier = serializers.SerializerMethodField()
+    directors = serializers.SerializerMethodField()
 
     def get_total_views(self, obj) -> int:
         return getattr(obj, "total_views", 0) or 0
@@ -93,6 +94,9 @@ class WatchedMovieSerializer(PosterUrlMixin, BackdropUrlMixin):
 
     def get_tier(self, obj) -> int | None:
         return getattr(obj, "tier", None)
+
+    def get_directors(self, obj) -> list[str]:
+        return extract_directors(obj.more_details)
 
     class Meta:
         model = WatchedMovie

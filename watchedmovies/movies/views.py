@@ -22,6 +22,7 @@ from ..pagination import CustomPagination
 from ..services import tmdb_api
 from . import filters as custom_filters
 from . import profile_cache, serializers, services
+from .utils import extract_directors
 
 
 class WatchedMovieViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, DestroyModelMixin):
@@ -226,6 +227,8 @@ class TMDBViewSet(GenericViewSet):
         serialized.is_valid(raise_exception=True)
 
         data = dict(serialized.data)
+        # Taken from the raw payload: the serializer only keeps its declared fields, so `credits` is gone by now
+        data["directors"] = extract_directors(movie_details)
         data["is_watched"] = False
         data["is_plan_to_watch"] = False
         data["tier"] = None

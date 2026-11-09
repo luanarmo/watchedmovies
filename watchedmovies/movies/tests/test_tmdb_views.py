@@ -112,6 +112,24 @@ def test_movie_details_includes_tier_when_authenticated(mock_get, db, user, api_
     assert response.data["tier"] == 3
 
 
+@patch("watchedmovies.movies.services.tmdb_api.get_movie_details")
+def test_movie_details_includes_the_directors(mock_get, db, api_rf):
+    mock_get.return_value = {
+        **FAKE_TMDB_DATA,
+        "id": 999,
+        "credits": {
+            "crew": [{"name": "Denis Villeneuve", "job": "Director"}, {"name": "Writer", "job": "Screenplay"}]
+        },
+    }
+
+    request = api_rf.get(FAKE_URL)
+    request.user = AnonymousUser()
+    response = TMDBViewSet.as_view({"get": "movie_details"})(request, movie_id="999")
+
+    assert response.status_code == 200
+    assert response.data["directors"] == ["Denis Villeneuve"]
+
+
 @patch("watchedmovies.services.tmdb_api.make_request")
 def test_popular_movies_returns_empty_list_when_tmdb_fails(mock_request, db, api_rf):
     mock_request.return_value.status_code = 401
