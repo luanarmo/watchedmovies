@@ -8,4 +8,6 @@ python manage.py migrate
 python /app/manage.py collectstatic --noinput
 
 echo "Ejecuta gunicorn"
-gunicorn --forwarded-allow-ips="*" --pythonpath ./config wsgi:application --workers=1 --bind ["0.0.0.0"]
+# ONE process on purpose: the cache is in-memory (see CACHES in config/settings/production.py).
+# Threads give concurrency (a slow request no longer blocks the rest) while sharing that cache.
+gunicorn --forwarded-allow-ips="*" --pythonpath ./config wsgi:application --workers=1 --worker-class=gthread --threads=4 --bind ["0.0.0.0"]

@@ -21,16 +21,16 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # no
 
 # CACHES
 # ------------------------------------------------------------------------------
+# In-process cache: Railway has no Redis service, and the previous Redis backend (IGNORE_EXCEPTIONS=True) failed
+# silently on every call, so nothing was cached and the DRF throttles saw no history.
+# It is only consistent because gunicorn runs ONE worker process (threads share this memory, see
+# compose/production/django/start). With more workers/replicas, invalidation (profile_cache) and throttling would
+# diverge between processes: go back to a shared backend (Redis) before scaling out.
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            # Mimicing memcache behavior.
-            # https://github.com/jazzband/django-redis#memcached-exceptions-behavior
-            "IGNORE_EXCEPTIONS": True,
-        },
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "watchedmovies",
+        "OPTIONS": {"MAX_ENTRIES": 500},
     }
 }
 
